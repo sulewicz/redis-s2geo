@@ -9,7 +9,7 @@
 #define LOOP_LIMIT 1
 #define POINT_LIMIT 64
 
-enum parsing_state
+enum ParsingState
 {
     POLYGON_START = 0,
     LOOP_START,
@@ -23,7 +23,7 @@ enum parsing_state
     POLYGON_END,
 };
 
-int parse_polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
+int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
 {
     *polygon = nullptr;
 
@@ -32,7 +32,7 @@ int parse_polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
     std::vector<S2Point> vertices;
     std::vector<std::unique_ptr<S2Loop>> loops;
 
-    enum parsing_state state = POLYGON_START;
+    enum ParsingState state = POLYGON_START;
     int i = 0;
     int point_count = 0;
     int loop_count = 0;
@@ -83,7 +83,6 @@ int parse_polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
             }
             else
             {
-                fprintf(stderr, "Error at %d in state %d!\n", i, state);
                 return -i - 1;
             }
             break;
@@ -192,9 +191,6 @@ int parse_polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
             }
             else if (body[i] == ']')
             {
-                if (loops.size() < 1) {
-                    return -i - 1;
-                }
                 state = POLYGON_END;
                 i++;
             }
@@ -206,6 +202,10 @@ int parse_polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
         case POLYGON_END:
             return -i - 1;
         }
+    }
+
+    if (loops.size() < 1) {
+        return -i - 1;
     }
 
     *polygon = std::make_unique<S2Polygon>(std::move(loops), S2Debug::DISABLE);

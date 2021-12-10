@@ -3,6 +3,7 @@ extern "C"
 #include "../redismodule.h"
 }
 
+#include <parser.h>
 #include <s2/s2region_coverer.h>
 #include <s2/s2latlng.h>
 #include <s2/s2latlng_rect.h>
@@ -66,11 +67,38 @@ int DeleteIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
 int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
-  RedisModule_ReplyWithError(ctx, "SetPolygonCommand: implement");
+  if (argc != 4) {
+    return RedisModule_WrongArity(ctx);
+  }
+
+  RedisModule_AutoMemory(ctx);
+  std::unique_ptr<S2Polygon> polygon(nullptr);
+  size_t l1;
+  const char *body = RedisModule_StringPtrLen(argv[3], &l1);
+  int ret = ParseS2Polygon(body, &polygon);
+  if (ret != 0) {
+    if (ret < 0) {
+      RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Invalid polygon provided, error at index %d", (-ret) - 1);
+      RedisModule_ReplyWithError(ctx, "format error in polygon body");
+    } else {
+      RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Invalid polygon provided, err=%d", ret);
+      RedisModule_ReplyWithError(ctx, "invalid polygon");
+    }
+    return REDISMODULE_ERR;
+  }
+
+  S2RegionCoverer coverer;
+  S2CellUnion cellUnion = coverer.GetCovering(*polygon);
+  RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Cell count=%zu", cellUnion.size());
+  for (const S2CellId &cellId : cellUnion) {
+    RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Cell %s", cellId.ToString().c_str());
+  }
+  RedisModule_ReplyWithNull(ctx);
+
   // TODO: HSET <INDEX>.polygons <NAME> <BODY>
   // TODO: index polygon in <INDEX>.cells
 
-  return REDISMODULE_ERR;
+  return REDISMODULE_OK;
 }
 
 int GetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)

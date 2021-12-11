@@ -43,7 +43,9 @@ include_directories(src)
 
 add_library(redis-s2geo SHARED
             src/module.cc
-            src/parser.cc)
+            src/parser.cc
+            src/geo.cc
+            src/index.cc)
 
 target_link_libraries(
     redis-s2geo

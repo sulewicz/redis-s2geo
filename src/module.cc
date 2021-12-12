@@ -47,7 +47,7 @@ int SetIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     RedisModule_AutoMemory(ctx);
     RedisModuleString *indexName = argv[1];
 
-    int ret = ValidateIndexName(ctx, indexName);
+    int ret = ValidateEntityName(ctx, indexName);
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "invalid index name");
@@ -82,7 +82,7 @@ int GetIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     RedisModule_AutoMemory(ctx);
     RedisModuleString *indexName = argv[1];
-    int ret = ValidateIndexName(ctx, indexName);
+    int ret = ValidateEntityName(ctx, indexName);
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "invalid index name");
@@ -120,7 +120,7 @@ int DeleteIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     RedisModule_AutoMemory(ctx);
     RedisModuleString *indexName = argv[1];
-    int ret = ValidateIndexName(ctx, indexName);
+    int ret = ValidateEntityName(ctx, indexName);
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "invalid index name");
@@ -140,7 +140,7 @@ int DeleteIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     }
     if (ret != 0)
     {
-        RedisModule_ReplyWithError(ctx, "unknown error");
+        RedisModule_ReplyWithError(ctx, "unknown error during index validation");
         return REDISMODULE_ERR;
     }
 
@@ -148,9 +148,13 @@ int DeleteIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     // TODO: DEL <INDEX>.polygons
     // TODO: DEL <INDEX>.cells
 
-    RedisModuleString *metaObjectString = CreateIndexMetaHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "DEL", "s", metaObjectString);
-    RedisModule_ReplyWithCallReply(ctx, reply); // TODO: change this once we handle the rest of the attributes
+    ret = DeleteIndex(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "failed to delete the index");
+        return REDISMODULE_ERR;
+    }
+    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
 
     return REDISMODULE_OK;
 }
@@ -163,44 +167,142 @@ int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     }
     RedisModule_AutoMemory(ctx);
 
-    // TODO: verify if index exists
-    // TODO: validate polygon name
+    RedisModuleString *indexName = argv[1];
+    RedisModuleString *polygonName = argv[2];
+    RedisModuleString *polygonBody = argv[3];
+    int ret = ValidateEntityName(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index name");
+        return REDISMODULE_ERR;
+    }
+
+    ret = ValidateEntityName(ctx, polygonName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid polygon name");
+        return REDISMODULE_ERR;
+    }
+
+    ret = ValidateIndex(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index");
+        return REDISMODULE_ERR;
+    }
 
     std::unique_ptr<S2Polygon> polygon = ParsePolygon(ctx, argv[3]);
     if (polygon.get() == nullptr)
     {
+        // TODO: ParsePolygon invokes ReplyWithError already, change this
         return REDISMODULE_ERR;
     }
 
     S2CellUnion cellUnion = IndexPolygon(ctx, polygon.get());
     if (cellUnion.size() == 0)
     {
+        RedisModule_ReplyWithError(ctx, "empty cell union for a given polygon");
+        return REDISMODULE_ERR;
+    }
+
+    ret = SetPolygon(ctx, indexName, polygonName, polygonBody);
+    if (ret != 0) {
+        RedisModule_ReplyWithError(ctx, "error while storing polygon body");
         return REDISMODULE_ERR;
     }
 
     // TODO: HSET <INDEX>.polygons <NAME> <BODY>
     // TODO: index polygon in <INDEX>.cells
-    RedisModule_ReplyWithNull(ctx);
+    // TODO: remove old cells if polygon is modified
+    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
     return REDISMODULE_OK;
 }
 
 int GetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
-    RedisModule_ReplyWithError(ctx, "GetPolygonCommand: implement");
-    // TODO: verify if index exists in a streamlined way
-    // TODO: HGET <INDEX>.polygons <NAME>
+    if (argc != 3)
+    {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModule_AutoMemory(ctx);
 
-    return REDISMODULE_ERR;
+    RedisModuleString *indexName = argv[1];
+    RedisModuleString *polygonName = argv[2];
+    int ret = ValidateEntityName(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index name");
+        return REDISMODULE_ERR;
+    }
+
+    ret = ValidateEntityName(ctx, polygonName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid polygon name");
+        return REDISMODULE_ERR;
+    }
+
+    ret = ValidateIndex(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index");
+        return REDISMODULE_ERR;
+    }
+
+    RedisModuleString *polygonBody;
+    ret = GetPolygon(ctx, indexName, polygonName, &polygonBody);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid polygon");
+        return REDISMODULE_ERR;
+    }
+    RedisModule_ReplyWithString(ctx, polygonBody);
+    
+    return REDISMODULE_OK;
 }
 
 int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
-    RedisModule_ReplyWithError(ctx, "DeletePolygonCommand: implement");
-    // TODO: verify if index exists in a streamlined way
-    // TODO: HDEL <INDEX>.polygons <NAME>
+    if (argc != 3)
+    {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModule_AutoMemory(ctx);
+
+    RedisModuleString *indexName = argv[1];
+    RedisModuleString *polygonName = argv[2];
+    int ret = ValidateEntityName(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index name");
+        return REDISMODULE_ERR;
+    }
+
+    ret = ValidateEntityName(ctx, polygonName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid polygon name");
+        return REDISMODULE_ERR;
+    }
+
+    ret = ValidateIndex(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index");
+        return REDISMODULE_ERR;
+    }
+
+    ret = DeletePolygon(ctx, indexName, polygonName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "polygon deletion failed");
+        return REDISMODULE_ERR;
+    }
     // TODO: remove polygon from <INDEX>.cells
 
-    return REDISMODULE_ERR;
+    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
+
+    return REDISMODULE_OK;
 }
 
 int SearchPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
@@ -260,7 +362,7 @@ extern "C" int RedisModule_OnLoad(RedisModuleCtx *ctx)
         return REDISMODULE_ERR;
     }
 
-    if (RedisModule_CreateCommand(ctx, "s2geo.polydel", GetPolygonCommand, "write",
+    if (RedisModule_CreateCommand(ctx, "s2geo.polydel", DeletePolygonCommand, "write",
                                   1, 1, 1) == REDISMODULE_ERR)
     {
         return REDISMODULE_ERR;

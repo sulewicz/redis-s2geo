@@ -19,6 +19,10 @@ Hash:
 <INDEX>.polygons:
 - <NAME> -> <BODY>
 
+## Cell info:
+Set:
+<INDEX>.cells.<NAME> -> [<CELLID>]
+
 ## Cell data:
 Set:
 <INDEX>.<CELLID> -> [<NAME>]
@@ -198,22 +202,35 @@ int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    S2CellUnion cellUnion = IndexPolygon(ctx, polygon.get());
-    if (cellUnion.size() == 0)
+    std::vector<std::string> cells = IndexPolygon(ctx, polygon.get());
+    if (cells.size() == 0)
     {
         RedisModule_ReplyWithError(ctx, "empty cell union for a given polygon");
         return REDISMODULE_ERR;
     }
 
-    ret = SetPolygon(ctx, indexName, polygonName, polygonBody);
-    if (ret != 0) {
+    ret = SetPolygonBody(ctx, indexName, polygonName, polygonBody);
+    if (ret != 0)
+    {
         RedisModule_ReplyWithError(ctx, "error while storing polygon body");
         return REDISMODULE_ERR;
     }
 
+    ret = DeletePolygonCells(ctx, indexName, polygonName);
+    if (ret != 0 && ret != S2GEO_ERR_NO_SUCH_POLYGON)
+    {
+        RedisModule_ReplyWithError(ctx, "error while deleting polygon cells");
+        return REDISMODULE_ERR;
+    }
+
+    ret = SetPolygonCells(ctx, indexName, polygonName, cells);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "error while storing polygon cells");
+        return REDISMODULE_ERR;
+    }
+
     // TODO: HSET <INDEX>.polygons <NAME> <BODY>
-    // TODO: index polygon in <INDEX>.cells
-    // TODO: remove old cells if polygon is modified
     RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
     return REDISMODULE_OK;
 }
@@ -250,14 +267,14 @@ int GetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     }
 
     RedisModuleString *polygonBody;
-    ret = GetPolygon(ctx, indexName, polygonName, &polygonBody);
+    ret = GetPolygonBody(ctx, indexName, polygonName, &polygonBody);
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "invalid polygon");
         return REDISMODULE_ERR;
     }
     RedisModule_ReplyWithString(ctx, polygonBody);
-    
+
     return REDISMODULE_OK;
 }
 
@@ -292,13 +309,19 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
         return REDISMODULE_ERR;
     }
 
-    ret = DeletePolygon(ctx, indexName, polygonName);
+    ret = DeletePolygonBody(ctx, indexName, polygonName);
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "polygon deletion failed");
         return REDISMODULE_ERR;
     }
-    // TODO: remove polygon from <INDEX>.cells
+
+    ret = DeletePolygonCells(ctx, indexName, polygonName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "polygon cells deletion failed");
+        return REDISMODULE_ERR;
+    }
 
     RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
 

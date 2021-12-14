@@ -3,7 +3,8 @@
 
 #define REDISMODULE_API extern
 
-extern "C" {
+extern "C"
+{
 #include "redismodule.h"
 }
 
@@ -30,14 +31,16 @@ std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *
     return std::move(polygon);
 }
 
-S2CellUnion IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon)
+std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon)
 {
+    std::vector<std::string> ret;
     S2RegionCoverer coverer;
     S2CellUnion cellUnion = coverer.GetCovering(*polygon);
     RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Cell count=%zu", cellUnion.size());
     for (const S2CellId &cellId : cellUnion)
     {
+        ret.push_back(cellId.ToString());
         RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Cell %s", cellId.ToString().c_str());
     }
-    return cellUnion;
+    return ret;
 }

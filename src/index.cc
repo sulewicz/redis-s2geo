@@ -10,6 +10,8 @@ extern "C"
 
 const char *INDEX_META_SUFFIX = "meta";
 const char *INDEX_POLYGONS_SUFFIX = "polygons";
+const char *INDEX_CELLS_SUFFIX = "cells";
+const char *POLYGON_CELLINFO_SUFFIX = "cellinfo";
 const char ENTITY_DELIM = ':';
 const char *INDEX_PARAMS_KEY = "params";
 const char *INDEX_PARAMS_VALUE = "<index>";
@@ -28,10 +30,26 @@ RedisModuleString *CreateIndexPolygonsHashKey(RedisModuleCtx *ctx, RedisModuleSt
     return RedisModule_CreateStringPrintf(ctx, "%s%c%s", cIndexName, ENTITY_DELIM, INDEX_POLYGONS_SUFFIX);
 }
 
+RedisModuleString *CreateIndexCellsSetKey(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *cellId)
+{
+    size_t len;
+    const char *cIndexName = RedisModule_StringPtrLen(indexName, &len);
+    const char *cCellId = RedisModule_StringPtrLen(cellId, &len);
+    return RedisModule_CreateStringPrintf(ctx, "%s%c%s%c%s", cIndexName, ENTITY_DELIM, INDEX_CELLS_SUFFIX, ENTITY_DELIM, cCellId);
+}
+
+RedisModuleString *CreatePolygonCellInfoSetKey(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName)
+{
+    size_t len;
+    const char *cIndexName = RedisModule_StringPtrLen(indexName, &len);
+    const char *cPolygonName = RedisModule_StringPtrLen(polygonName, &len);
+    return RedisModule_CreateStringPrintf(ctx, "%s%c%s%c%s", cIndexName, ENTITY_DELIM, POLYGON_CELLINFO_SUFFIX, ENTITY_DELIM, cPolygonName);
+}
+
 int ValidateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
-    RedisModuleString *metaObjectString = CreateIndexMetaHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HGET", "sc", metaObjectString, INDEX_PARAMS_KEY);
+    RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HGET", "sc", metaHashKey, INDEX_PARAMS_KEY);
     int type = RedisModule_CallReplyType(reply);
     if (type == REDISMODULE_REPLY_NULL)
     {
@@ -67,38 +85,39 @@ int ValidateEntityName(RedisModuleCtx *ctx, RedisModuleString *indexName)
 
 int CreateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
-    RedisModuleString *metaObjectString = CreateIndexMetaHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HSET", "scc", metaObjectString, INDEX_PARAMS_KEY, INDEX_PARAMS_VALUE);
+    RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HSET", "scc", metaHashKey, INDEX_PARAMS_KEY, INDEX_PARAMS_VALUE);
     // TODO: handle error here
     return 0;
 }
 
 int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
-    RedisModuleString *metaObjectString = CreateIndexMetaHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "DEL", "s", metaObjectString);
+    RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "DEL", "s", metaHashKey);
     // TODO: handle error here
-    
-    RedisModuleString *polygonsObjectString = CreateIndexPolygonsHashKey(ctx, indexName);
-    reply = RedisModule_Call(ctx, "DEL", "s", polygonsObjectString);
+
+    RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
+    reply = RedisModule_Call(ctx, "DEL", "s", polygonsHash);
     // TODO: handle error here
 
     // TODO: delete cells
+    // TODO: delete cells index
     return 0;
 }
 
-int SetPolygon(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString *polygonBody)
+int SetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString *polygonBody)
 {
-    RedisModuleString *polygonsObjectString = CreateIndexPolygonsHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HSET", "sss", polygonsObjectString, polygonName, polygonBody);
+    RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HSET", "sss", polygonsHash, polygonName, polygonBody);
     // TODO: handle error here
     return 0;
 }
 
-int GetPolygon(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString **output)
+int GetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString **output)
 {
-    RedisModuleString *polygonsObjectString = CreateIndexPolygonsHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HGET", "ss", polygonsObjectString, polygonName);
+    RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HGET", "ss", polygonsHash, polygonName);
     if (RedisModule_CallReplyType(reply) != REDISMODULE_REPLY_STRING)
     {
         return S2GEO_ERR_NO_SUCH_POLYGON;
@@ -107,10 +126,51 @@ int GetPolygon(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleStr
     return 0;
 }
 
-int DeletePolygon(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName)
+int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName)
 {
-    RedisModuleString *polygonsObjectString = CreateIndexPolygonsHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HDEL", "ss", polygonsObjectString, polygonName);
+    RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HDEL", "ss", polygonsHash, polygonName);
     // TODO: handle error here (e.g, poly does not exist)
+    return 0;
+}
+
+int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, std::vector<std::string> cells)
+{
+    RedisModuleString *cellInfoSetKey = CreatePolygonCellInfoSetKey(ctx, indexName, polygonName);
+    std::unique_ptr<RedisModuleString *[]> cellStrings
+    { new RedisModuleString *[cells.size()] };
+
+    for (int idx = 0; idx < cells.size(); idx++)
+    {
+        cellStrings.get()[idx] = RedisModule_CreateString(ctx, cells[idx].c_str(), cells[idx].length());
+    }
+
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "SADD", "sv", cellInfoSetKey, cellStrings.get(), cells.size());
+    for (int idx = 0; idx < cells.size(); idx++)
+    {
+        RedisModuleString *indexCellsHashKey = CreateIndexCellsSetKey(ctx, indexName, cellStrings.get()[idx]);
+        RedisModule_Call(ctx, "SADD", "ss", indexCellsHashKey, polygonName);
+    }
+    return 0;
+}
+
+int DeletePolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName)
+{
+    RedisModuleString *cellInfoSetKey = CreatePolygonCellInfoSetKey(ctx, indexName, polygonName);
+    RedisModuleCallReply *cells = RedisModule_Call(ctx, "SMEMBERS", "s", cellInfoSetKey);
+    size_t len = RedisModule_CallReplyLength(cells);
+    if (len == 0)
+    {
+        return S2GEO_ERR_NO_SUCH_POLYGON;
+    }
+
+    RedisModule_Call(ctx, "DEL", "s", cellInfoSetKey);
+
+    for (int idx = 0; idx < len; idx++)
+    {
+        RedisModuleString *cellId =  RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(cells, idx));
+        RedisModuleString *indexCellsHashKey = CreateIndexCellsSetKey(ctx, indexName, cellId);
+        RedisModule_Call(ctx, "SREM", "ss", indexCellsHashKey, polygonName);
+    }
     return 0;
 }

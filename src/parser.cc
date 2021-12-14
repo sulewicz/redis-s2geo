@@ -204,6 +204,10 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
         }
     }
 
+    if (state != POLYGON_END) {
+        return -i - 1;
+    }
+
     if (loops.size() < 1) {
         return -i - 1;
     }

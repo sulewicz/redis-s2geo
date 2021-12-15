@@ -18,12 +18,10 @@ std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *
     {
         if (ret < 0)
         {
-            RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Invalid polygon provided, error at index %d", (-ret) - 1);
             RedisModule_ReplyWithError(ctx, "format error in polygon body");
         }
         else
         {
-            RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Invalid polygon provided, err=%d", ret);
             RedisModule_ReplyWithError(ctx, "invalid polygon");
         }
         return nullptr;
@@ -36,11 +34,9 @@ std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon)
     std::vector<std::string> ret;
     S2RegionCoverer coverer;
     S2CellUnion cellUnion = coverer.GetCovering(*polygon);
-    RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Cell count=%zu", cellUnion.size());
     for (const S2CellId &cellId : cellUnion)
     {
         ret.push_back(cellId.ToString());
-        RedisModule_Log(ctx, REDISMODULE_LOGLEVEL_WARNING, "Cell %s", cellId.ToString().c_str());
     }
     return ret;
 }

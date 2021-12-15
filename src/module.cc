@@ -6,41 +6,6 @@ extern "C"
 #include "geo.h"
 #include "index.h"
 
-/*
-# Data layout:
-
-## Meta data:
-Hash:
-<INDEX>.meta:
-- params -> params (TODO)
-
-## Shape data:
-Hash:
-<INDEX>.polygons:
-- <NAME> -> <BODY>
-
-## Cell info:
-Set:
-<INDEX>.cells.<NAME> -> [<CELLID>]
-
-## Cell data:
-Set:
-<INDEX>.<CELLID> -> [<NAME>]
-*/
-
-// Unit test entry point for the module
-int TestModule(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
-{
-    RedisModule_AutoMemory(ctx);
-    S2RegionCoverer coverer;
-    auto region = S2LatLngRect::FromPointPair(S2LatLng::FromDegrees(45.583289756006316, -109.6875), S2LatLng::FromDegrees(-103.71093749999999, 49.15296965617042));
-    auto result = coverer.GetCovering(region);
-    auto str = result.ToString();
-    RedisModule_ReplyWithCString(ctx, str.c_str());
-
-    return REDISMODULE_OK;
-}
-
 int SetIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     if (argc != 2)
@@ -147,10 +112,6 @@ int DeleteIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         RedisModule_ReplyWithError(ctx, "unknown error during index validation");
         return REDISMODULE_ERR;
     }
-
-    // TODO: DEL <INDEX>.meta
-    // TODO: DEL <INDEX>.polygons
-    // TODO: DEL <INDEX>.cells
 
     ret = DeleteIndex(ctx, indexName);
     if (ret != 0)
@@ -398,12 +359,6 @@ extern "C" int RedisModule_OnLoad(RedisModuleCtx *ctx)
     }
 
     if (RedisModule_CreateCommand(ctx, "s2geo.pointsearch", SearchPointCommand, "readonly",
-                                  1, 1, 1) == REDISMODULE_ERR)
-    {
-        return REDISMODULE_ERR;
-    }
-
-    if (RedisModule_CreateCommand(ctx, "s2geo.test", TestModule, "readonly",
                                   1, 1, 1) == REDISMODULE_ERR)
     {
         return REDISMODULE_ERR;

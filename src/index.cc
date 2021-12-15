@@ -46,6 +46,20 @@ RedisModuleString *CreatePolygonCellInfoSetKey(RedisModuleCtx *ctx, RedisModuleS
     return RedisModule_CreateStringPrintf(ctx, "%s%c%s%c%s", cIndexName, ENTITY_DELIM, POLYGON_CELLINFO_SUFFIX, ENTITY_DELIM, cPolygonName);
 }
 
+RedisModuleString *CreatePolygonCellInfoPattern(RedisModuleCtx *ctx, RedisModuleString *indexName)
+{
+    size_t len;
+    const char *cIndexName = RedisModule_StringPtrLen(indexName, &len);
+    return RedisModule_CreateStringPrintf(ctx, "%s%c%s%c*", cIndexName, ENTITY_DELIM, POLYGON_CELLINFO_SUFFIX, ENTITY_DELIM);
+}
+
+RedisModuleString *CreateIndexCellsPattern(RedisModuleCtx *ctx, RedisModuleString *indexName)
+{
+    size_t len;
+    const char *cIndexName = RedisModule_StringPtrLen(indexName, &len);
+    return RedisModule_CreateStringPrintf(ctx, "%s%c%s%c*", cIndexName, ENTITY_DELIM, INDEX_CELLS_SUFFIX, ENTITY_DELIM);
+}
+
 int ValidateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
     RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
@@ -93,16 +107,39 @@ int CreateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 
 int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
-    RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "DEL", "s", metaHashKey);
+    RedisModuleString *polygonCellInfoPattern = CreatePolygonCellInfoPattern(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "KEYS", "s", polygonCellInfoPattern);
     // TODO: handle error here
+    size_t len = RedisModule_CallReplyLength(reply);
+    for (int idx = 0; idx < len; idx++)
+    {
+        RedisModuleString *key = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(reply, idx));
+        // TODO: batch it up and move to scan
+        RedisModule_Call(ctx, "DEL", "s", key);
+        // TODO: handle error here
+    }
+
+    RedisModuleString *indexCellsPattern = CreateIndexCellsPattern(ctx, indexName);
+    reply = RedisModule_Call(ctx, "KEYS", "s", indexCellsPattern);
+    // TODO: handle error here
+    len = RedisModule_CallReplyLength(reply);
+    for (int idx = 0; idx < len; idx++)
+    {
+        size_t cLen;
+        RedisModuleString *key = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(reply, idx));
+        // TODO: batch it up and move to scan
+        RedisModule_Call(ctx, "DEL", "s", key);
+        // TODO: handle error here
+    }
 
     RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
     reply = RedisModule_Call(ctx, "DEL", "s", polygonsHash);
     // TODO: handle error here
 
-    // TODO: delete cells
-    // TODO: delete cells index
+    RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
+    reply = RedisModule_Call(ctx, "DEL", "s", metaHashKey);
+    // TODO: handle error here
+
     return 0;
 }
 
@@ -168,7 +205,7 @@ int DeletePolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisM
 
     for (int idx = 0; idx < len; idx++)
     {
-        RedisModuleString *cellId =  RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(cells, idx));
+        RedisModuleString *cellId = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(cells, idx));
         RedisModuleString *indexCellsHashKey = CreateIndexCellsSetKey(ctx, indexName, cellId);
         RedisModule_Call(ctx, "SREM", "ss", indexCellsHashKey, polygonName);
     }

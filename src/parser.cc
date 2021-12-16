@@ -20,8 +20,120 @@ enum ParsingState
     POINT_END,
     LOOP_DELIM,
     POLYGON_DELIM,
-    POLYGON_END,
+    EOL,
 };
+
+int ParseS2LatLng(const char *body, std::unique_ptr<S2LatLng> *latLng)
+{
+    *latLng = nullptr;
+
+    double latitude;
+    double longitude;
+
+    enum ParsingState state = POINT_START;
+    int i = 0;
+    while (body[i] != 0)
+    {
+        if (body[i] == ' ')
+        {
+            i++;
+            continue;
+        }
+        switch (state)
+        {
+        case POINT_START:
+            if (body[i] == '[')
+            {
+                state = POINT_LON;
+                i++;
+            }
+            else
+            {
+                return -i - 1;
+            }
+            break;
+        case POINT_LON:
+            if (isdigit(body[i]) || body[i] == '-' || body[i] == '+' || body[i] == '.')
+            {
+                char *end;
+                longitude = strtod(body + i, &end);
+                if (end != NULL && end > body + i)
+                {
+                    i = end - body;
+                    state = POINT_DELIM;
+                }
+                else
+                {
+                    return -i - 1;
+                }
+            }
+            else
+            {
+                return -i - 1;
+            }
+            break;
+        case POINT_DELIM:
+            if (body[i] == ',')
+            {
+                state = POINT_LAT;
+                i++;
+            }
+            else
+            {
+                return -i - 1;
+            }
+            break;
+        case POINT_LAT:
+            if (isdigit(body[i]) || body[i] == '-' || body[i] == '+' || body[i] == '.')
+            {
+                char *end;
+                latitude = strtod(body + i, &end);
+                if (end != NULL && end > body + i)
+                {
+                    i = end - body;
+                    state = POINT_END;
+                }
+                else
+                {
+                    return -i - 1;
+                }
+            }
+            else
+            {
+                return -i - 1;
+            }
+            break;
+        case POINT_END:
+            if (body[i] == ']')
+            {
+                state = EOL;
+                i++;
+            }
+            else
+            {
+                return -i - 1;
+            }
+            break;
+        case EOL:
+        default:
+            return -i - 1;
+            break;
+        }
+    }
+
+    if (state != EOL)
+    {
+        return -i - 1;
+    }
+
+    *latLng = std::make_unique<S2LatLng>(std::move(S2LatLng::FromDegrees(latitude, longitude)));
+    if (!(*latLng)->is_valid())
+    {
+        *latLng = nullptr;
+        return -i - 1;
+    }
+    return 0;
+}
 
 int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
 {
@@ -59,7 +171,8 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
         case LOOP_START:
             if (body[i] == '[')
             {
-                if (loop_count >= LOOP_LIMIT) {
+                if (loop_count >= LOOP_LIMIT)
+                {
                     // Only one ring it supported for now
                     return PARSE_ERR_LOOP_LIMIT;
                 }
@@ -74,7 +187,8 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
         case POINT_START:
             if (body[i] == '[')
             {
-                if (point_count >= POINT_LIMIT) {
+                if (point_count >= POINT_LIMIT)
+                {
                     // Only one ring it supported for now
                     return POINT_LIMIT;
                 }
@@ -158,16 +272,19 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
             }
             else if (body[i] == ']')
             {
-                if (vertices.size() < 4) {
+                if (vertices.size() < 4)
+                {
                     return -i - 1;
                 }
 
-                if (vertices[0] == vertices[vertices.size() - 1]) {
+                if (vertices[0] == vertices[vertices.size() - 1])
+                {
                     vertices.pop_back();
                 }
-                
+
                 auto loop = std::make_unique<S2Loop>(vertices, S2Debug::DISABLE);
-                if (!loop->IsValid()) {
+                if (!loop->IsValid())
+                {
                     return -i - 1;
                 }
                 loops.push_back(std::move(loop));
@@ -191,7 +308,7 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
             }
             else if (body[i] == ']')
             {
-                state = POLYGON_END;
+                state = EOL;
                 i++;
             }
             else
@@ -199,22 +316,25 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
                 return -i - 1;
             }
             break;
-        case POLYGON_END:
+        case EOL:
             return -i - 1;
         }
     }
 
-    if (state != POLYGON_END) {
+    if (state != EOL)
+    {
         return -i - 1;
     }
 
-    if (loops.size() < 1) {
+    if (loops.size() < 1)
+    {
         return -i - 1;
     }
 
     *polygon = std::make_unique<S2Polygon>(std::move(loops), S2Debug::DISABLE);
-    if (!(*polygon)->IsValid()) {
-        polygon = nullptr;
+    if (!(*polygon)->IsValid())
+    {
+        *polygon = nullptr;
         return -i - 1;
     }
     return 0;

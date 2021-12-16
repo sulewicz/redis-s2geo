@@ -29,6 +29,27 @@ std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *
     return std::move(polygon);
 }
 
+std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *body)
+{
+    std::unique_ptr<S2LatLng> latLng(nullptr);
+    size_t len;
+    const char *cBody = RedisModule_StringPtrLen(body, &len);
+    int ret = ParseS2LatLng(cBody, &latLng);
+    if (ret != 0)
+    {
+        if (ret < 0)
+        {
+            RedisModule_ReplyWithError(ctx, "format error in point body");
+        }
+        else
+        {
+            RedisModule_ReplyWithError(ctx, "invalid point");
+        }
+        return nullptr;
+    }
+    return std::move(latLng);
+}
+
 std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon)
 {
     std::vector<std::string> ret;

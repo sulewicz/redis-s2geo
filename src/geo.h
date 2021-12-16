@@ -13,6 +13,8 @@ extern "C"
 
 std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *body);
 
+std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *body);
+
 std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon);
 
 #endif // GEO_H

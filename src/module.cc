@@ -156,10 +156,10 @@ int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    std::unique_ptr<S2Polygon> polygon = ParsePolygon(ctx, argv[3]);
+    std::unique_ptr<S2Polygon> polygon = ParsePolygon(ctx, polygonBody);
     if (polygon.get() == nullptr)
     {
-        // TODO: ParsePolygon invokes ReplyWithError already, change this
+        RedisModule_ReplyWithError(ctx, "invalid polygon");
         return REDISMODULE_ERR;
     }
 
@@ -191,7 +191,6 @@ int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    // TODO: HSET <INDEX>.polygons <NAME> <BODY>
     RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
     return REDISMODULE_OK;
 }

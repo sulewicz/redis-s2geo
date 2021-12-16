@@ -17,4 +17,6 @@ std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *bo
 
 std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon);
 
+std::vector<std::string> IndexPoint(RedisModuleCtx *ctx, S2LatLng *latLng);
+
 #endif // GEO_H

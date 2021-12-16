@@ -38,6 +38,13 @@ RedisModuleString *CreateIndexCellsSetKey(RedisModuleCtx *ctx, RedisModuleString
     return RedisModule_CreateStringPrintf(ctx, "%s%c%s%c%s", cIndexName, ENTITY_DELIM, INDEX_CELLS_SUFFIX, ENTITY_DELIM, cCellId);
 }
 
+RedisModuleString *CreateIndexCellsSetKeyCStr(RedisModuleCtx *ctx, RedisModuleString *indexName, const char *cCellId)
+{
+    size_t len;
+    const char *cIndexName = RedisModule_StringPtrLen(indexName, &len);
+    return RedisModule_CreateStringPrintf(ctx, "%s%c%s%c%s", cIndexName, ENTITY_DELIM, INDEX_CELLS_SUFFIX, ENTITY_DELIM, cCellId);
+}
+
 RedisModuleString *CreatePolygonCellInfoSetKey(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName)
 {
     size_t len;
@@ -171,11 +178,10 @@ int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisMo
     return 0;
 }
 
-int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, std::vector<std::string> cells)
+int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, const std::vector<std::string> &cells)
 {
     RedisModuleString *cellInfoSetKey = CreatePolygonCellInfoSetKey(ctx, indexName, polygonName);
-    std::unique_ptr<RedisModuleString *[]> cellStrings
-    { new RedisModuleString *[cells.size()] };
+    std::unique_ptr<RedisModuleString *[]> cellStrings(new RedisModuleString *[cells.size()]);
 
     for (int idx = 0; idx < cells.size(); idx++)
     {
@@ -209,5 +215,18 @@ int DeletePolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisM
         RedisModuleString *indexCellsHashKey = CreateIndexCellsSetKey(ctx, indexName, cellId);
         RedisModule_Call(ctx, "SREM", "ss", indexCellsHashKey, polygonName);
     }
+    return 0;
+}
+
+int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const std::vector<std::string> &cells, RedisModuleCallReply **polygons)
+{
+    std::unique_ptr<RedisModuleString *[]> cellStrings(new RedisModuleString *[cells.size()]);
+
+    for (int idx = 0; idx < cells.size(); idx++)
+    {
+        cellStrings.get()[idx] = CreateIndexCellsSetKeyCStr(ctx, indexName, cells[idx].c_str());
+    }
+    *polygons = RedisModule_Call(ctx, "SUNION", "v", cellStrings.get(), cells.size());
+
     return 0;
 }

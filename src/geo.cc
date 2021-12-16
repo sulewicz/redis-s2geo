@@ -8,6 +8,8 @@ extern "C"
 #include "redismodule.h"
 }
 
+constexpr int kMaxCells = 128;
+
 std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *body)
 {
     std::unique_ptr<S2Polygon> polygon(nullptr);
@@ -37,11 +39,26 @@ std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *bo
 std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon)
 {
     std::vector<std::string> ret;
-    S2RegionCoverer coverer;
+    S2RegionCoverer::Options options;
+    options.set_max_cells(kMaxCells);
+    S2RegionCoverer coverer(options);
     S2CellUnion cellUnion = coverer.GetCovering(*polygon);
     for (const S2CellId &cellId : cellUnion)
     {
         ret.push_back(cellId.ToString());
     }
+    return ret;
+}
+
+std::vector<std::string> IndexPoint(RedisModuleCtx *ctx, S2LatLng *latLng)
+{
+    std::vector<std::string> ret;
+    S2CellId cellId(latLng->ToPoint());
+    std::string cellIdStr = cellId.ToString();
+    ret.push_back(cellIdStr.substr(0, 1));
+    for (int i = 3; i < cellIdStr.length(); i++) {
+        ret.push_back(cellIdStr.substr(0, i));
+    }
+    ret.push_back(cellIdStr);
     return ret;
 }

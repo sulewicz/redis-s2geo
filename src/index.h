@@ -14,6 +14,7 @@ extern "C"
 {
     typedef struct RedisModuleCtx RedisModuleCtx;
     typedef struct RedisModuleString RedisModuleString;
+    typedef struct RedisModuleCallReply RedisModuleCallReply;
 }
 
 int ValidateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName);
@@ -30,8 +31,10 @@ int GetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModul
 
 int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName);
 
-int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, std::vector<std::string> cells);
+int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, const std::vector<std::string> &cells);
 
 int DeletePolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName);
+
+int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const std::vector<std::string> &cells, RedisModuleCallReply **polygons);
 
 #endif // INDEX_H

@@ -299,11 +299,52 @@ int SearchPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
 
 int SearchPointCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
-    RedisModule_ReplyWithError(ctx, "SearchPointCommand: implement");
+    if (argc != 3)
+    {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModule_AutoMemory(ctx);
 
-    // TODO: Generate cell and query <INDEX>.cells and return names
+    RedisModuleString *indexName = argv[1];
+    RedisModuleString *pointBody = argv[2];
+    int ret = ValidateEntityName(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index name");
+        return REDISMODULE_ERR;
+    }
 
-    return REDISMODULE_ERR;
+    ret = ValidateIndex(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index");
+        return REDISMODULE_ERR;
+    }
+
+    std::unique_ptr<S2LatLng> point = ParseLatLng(ctx, pointBody);
+    if (point.get() == nullptr)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid point");
+        return REDISMODULE_ERR;
+    }
+
+    std::vector<std::string> cells = IndexPoint(ctx, point.get());
+    if (cells.size() == 0)
+    {
+        RedisModule_ReplyWithError(ctx, "no cells for a given point");
+        return REDISMODULE_ERR;
+    }
+
+    RedisModuleCallReply *polygons;
+    ret = GetPolygonsInCells(ctx, indexName, cells, &polygons);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "error while fetching polygons");
+        return REDISMODULE_ERR;
+    }
+
+    RedisModule_ReplyWithCallReply(ctx, polygons);
+    return REDISMODULE_OK;
 }
 
 extern "C" int RedisModule_OnLoad(RedisModuleCtx *ctx)

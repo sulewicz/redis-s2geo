@@ -178,14 +178,16 @@ int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisMo
     return 0;
 }
 
-int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, const std::vector<std::string> &cells)
+int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, const std::unordered_set<std::string> &cells)
 {
     RedisModuleString *cellInfoSetKey = CreatePolygonCellInfoSetKey(ctx, indexName, polygonName);
     std::unique_ptr<RedisModuleString *[]> cellStrings(new RedisModuleString *[cells.size()]);
 
-    for (int idx = 0; idx < cells.size(); idx++)
+    int idx = 0;
+    for (const auto& cell : cells)
     {
-        cellStrings.get()[idx] = RedisModule_CreateString(ctx, cells[idx].c_str(), cells[idx].length());
+        cellStrings.get()[idx] = RedisModule_CreateString(ctx, cell.c_str(), cell.length());
+        idx++;
     }
 
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "SADD", "sv", cellInfoSetKey, cellStrings.get(), cells.size());
@@ -218,13 +220,15 @@ int DeletePolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisM
     return 0;
 }
 
-int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const std::vector<std::string> &cells, RedisModuleCallReply **polygons)
+int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const std::unordered_set<std::string> &cells, RedisModuleCallReply **polygons)
 {
     std::unique_ptr<RedisModuleString *[]> cellStrings(new RedisModuleString *[cells.size()]);
 
-    for (int idx = 0; idx < cells.size(); idx++)
+    int idx = 0;
+    for (const auto& cell : cells)
     {
-        cellStrings.get()[idx] = CreateIndexCellsSetKeyCStr(ctx, indexName, cells[idx].c_str());
+        cellStrings.get()[idx] = CreateIndexCellsSetKeyCStr(ctx, indexName, cell.c_str());
+        idx++;
     }
     *polygons = RedisModule_Call(ctx, "SUNION", "v", cellStrings.get(), cells.size());
 

@@ -2,6 +2,7 @@
 #define GEO_H
 
 #include <memory>
+#include <unordered_set>
 #include <s2/s2region_coverer.h>
 #include <s2/s2polygon.h>
 
@@ -15,8 +16,10 @@ std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *
 
 std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *body);
 
-std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon);
+std::unordered_set<std::string> IndexPolygonForOverlapTest(RedisModuleCtx *ctx, S2Polygon *polygon);
 
-std::vector<std::string> IndexPoint(RedisModuleCtx *ctx, S2LatLng *latLng);
+std::unordered_set<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon);
+
+std::unordered_set<std::string> IndexPoint(RedisModuleCtx *ctx, S2LatLng *latLng);
 
 #endif // GEO_H

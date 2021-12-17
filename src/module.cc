@@ -163,7 +163,7 @@ int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    std::vector<std::string> cells = IndexPolygon(ctx, polygon.get());
+    std::unordered_set<std::string> cells = IndexPolygon(ctx, polygon.get());
     if (cells.size() == 0)
     {
         RedisModule_ReplyWithError(ctx, "empty cell union for a given polygon");
@@ -290,11 +290,52 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
 
 int SearchPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
-    RedisModule_ReplyWithError(ctx, "SearchPolygonCommand: implement");
+    if (argc != 3)
+    {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModule_AutoMemory(ctx);
 
-    // TODO: Generate cells and query <INDEX>.cells and return names
+    RedisModuleString *indexName = argv[1];
+    RedisModuleString *polygonBody = argv[2];
+    int ret = ValidateEntityName(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index name");
+        return REDISMODULE_ERR;
+    }
 
-    return REDISMODULE_ERR;
+    ret = ValidateIndex(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index");
+        return REDISMODULE_ERR;
+    }
+
+    std::unique_ptr<S2Polygon> polygon = ParsePolygon(ctx, polygonBody);
+    if (polygon.get() == nullptr)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid polygon");
+        return REDISMODULE_ERR;
+    }
+
+    std::unordered_set<std::string> cells = IndexPolygonForOverlapTest(ctx, polygon.get());
+    if (cells.size() == 0)
+    {
+        RedisModule_ReplyWithError(ctx, "empty cell union for a given polygon");
+        return REDISMODULE_ERR;
+    }
+
+    RedisModuleCallReply *polygons;
+    ret = GetPolygonsInCells(ctx, indexName, cells, &polygons);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "error while fetching polygons");
+        return REDISMODULE_ERR;
+    }
+
+    RedisModule_ReplyWithCallReply(ctx, polygons);
+    return REDISMODULE_OK;
 }
 
 int SearchPointCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
@@ -328,7 +369,7 @@ int SearchPointCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    std::vector<std::string> cells = IndexPoint(ctx, point.get());
+    std::unordered_set<std::string> cells = IndexPoint(ctx, point.get());
     if (cells.size() == 0)
     {
         RedisModule_ReplyWithError(ctx, "no cells for a given point");

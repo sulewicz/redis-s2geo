@@ -1,7 +1,7 @@
 #ifndef INDEX_H
 #define INDEX_H
 
-#include <vector>
+#include <unordered_set>
 #include <string>
 
 #define S2GEO_ERR_NO_SUCH_INDEX 1
@@ -31,10 +31,10 @@ int GetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModul
 
 int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName);
 
-int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, const std::vector<std::string> &cells);
+int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, const std::unordered_set<std::string> &cells);
 
 int DeletePolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName);
 
-int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const std::vector<std::string> &cells, RedisModuleCallReply **polygons);
+int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const std::unordered_set<std::string> &cells, RedisModuleCallReply **polygons);
 
 #endif // INDEX_H

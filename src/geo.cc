@@ -36,29 +36,60 @@ std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *bo
     return std::move(latLng);
 }
 
-std::vector<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon)
+std::unordered_set<std::string> IndexPolygon(RedisModuleCtx *ctx, S2Polygon *polygon)
 {
-    std::vector<std::string> ret;
+    std::unordered_set<std::string> ret;
     S2RegionCoverer::Options options;
     options.set_max_cells(kMaxCells);
     S2RegionCoverer coverer(options);
     S2CellUnion cellUnion = coverer.GetCovering(*polygon);
     for (const S2CellId &cellId : cellUnion)
     {
-        ret.push_back(cellId.ToString());
+        std::string cellIdStr = cellId.ToString();
+        ret.insert(cellId.ToString());
+
+        // indicates that the polygon occupies a subcell
+        ret.insert(cellIdStr.substr(0, 1) + "*");
+        for (int i = 3; i < cellIdStr.length(); i++) {
+            ret.insert(cellIdStr.substr(0, i) + "*");
+        }
+        ret.insert(cellIdStr + "*");
     }
     return ret;
 }
 
-std::vector<std::string> IndexPoint(RedisModuleCtx *ctx, S2LatLng *latLng)
+std::unordered_set<std::string> IndexPolygonForOverlapTest(RedisModuleCtx *ctx, S2Polygon *polygon)
 {
-    std::vector<std::string> ret;
+    std::unordered_set<std::string> ret;
+    S2RegionCoverer::Options options;
+    options.set_max_cells(kMaxCells);
+    S2RegionCoverer coverer(options);
+    S2CellUnion cellUnion = coverer.GetCovering(*polygon);
+    for (const S2CellId &cellId : cellUnion)
+    {
+        std::string cellIdStr = cellId.ToString();
+        ret.insert(cellId.ToString()); // will result in polygons that occupies the same cell
+
+        // will result in polygons that occupy (entirely) the parent cells
+        ret.insert(cellIdStr.substr(0, 1));
+        for (int i = 3; i < cellIdStr.length(); i++) {
+            ret.insert(cellIdStr.substr(0, i));
+        }
+        // will result in polygons that occupy subcells
+        ret.insert(cellIdStr + "*");
+    }
+    return ret;
+}
+
+std::unordered_set<std::string> IndexPoint(RedisModuleCtx *ctx, S2LatLng *latLng)
+{
+    std::unordered_set<std::string> ret;
     S2CellId cellId(latLng->ToPoint());
     std::string cellIdStr = cellId.ToString();
-    ret.push_back(cellIdStr.substr(0, 1));
+    ret.insert(cellIdStr.substr(0, 1));
     for (int i = 3; i < cellIdStr.length(); i++) {
-        ret.push_back(cellIdStr.substr(0, i));
+        ret.insert(cellIdStr.substr(0, i));
     }
-    ret.push_back(cellIdStr);
+    ret.insert(cellIdStr);
     return ret;
 }

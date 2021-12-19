@@ -163,7 +163,7 @@ int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    std::unordered_set<std::string> cells = IndexPolygon(ctx, polygon.get());
+    std::unordered_set<std::string> cells = IndexPolygon(polygon.get());
     if (cells.size() == 0)
     {
         RedisModule_ReplyWithError(ctx, "empty cell union for a given polygon");
@@ -319,7 +319,7 @@ int SearchPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
         return REDISMODULE_ERR;
     }
 
-    std::unordered_set<std::string> cells = IndexPolygonForOverlapTest(ctx, polygon.get());
+    std::unordered_set<std::string> cells = IndexPolygonForOverlapTest(polygon.get());
     if (cells.size() == 0)
     {
         RedisModule_ReplyWithError(ctx, "empty cell union for a given polygon");
@@ -369,7 +369,7 @@ int SearchPointCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    std::unordered_set<std::string> cells = IndexPoint(ctx, point.get());
+    std::unordered_set<std::string> cells = IndexPoint(point.get());
     if (cells.size() == 0)
     {
         RedisModule_ReplyWithError(ctx, "no cells for a given point");

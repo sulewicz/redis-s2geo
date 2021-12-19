@@ -61,8 +61,10 @@ set_target_properties(redis-s2geo PROPERTIES
 
 include(cmake/FetchCMocka.cmake)
 
-add_executable(redis-s2geo-test 
-    src/test/test.cc
+add_executable(redis-s2geo-test
+    src/unittest/test_parser.cc
+    src/unittest/test_geo.cc
+    src/unittest/test.cc
     )
 
 target_link_libraries(redis-s2geo-test PRIVATE cmocka-static redis-s2geo)

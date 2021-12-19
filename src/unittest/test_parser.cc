@@ -8,7 +8,7 @@ extern "C"
 #include <cmocka.h>
 }
 
-static void test_parse_polygon(void **state)
+void TestParsePolygon(void **state)
 {
     std::unique_ptr<S2Polygon> polygon(nullptr);
     assert_int_equal(0, ParseS2Polygon("[[[31.9921875,46.31658418182218],[78.75,25.48295117535531],[82.6171875,64.16810689799152],[31.9921875,46.31658418182218]]]", &polygon));
@@ -27,6 +27,7 @@ static void test_parse_polygon(void **state)
 
     assert_int_equal(-59, ParseS2Polygon("[[[31.9921875,46.31658418182218],[78.75,25.48295117535531][82.6171875,64.16810689799152]]]", &polygon));
     assert_null(polygon.get());
+
     assert_int_equal(-1, ParseS2Polygon("]", &polygon));
     assert_null(polygon.get());
 
@@ -38,9 +39,15 @@ static void test_parse_polygon(void **state)
 
     assert_int_equal(-1, ParseS2Polygon("", &polygon));
     assert_null(polygon.get());
+
+    assert_int_equal(-1, ParseS2Polygon(nullptr, &polygon));
+    assert_null(polygon.get());
+
+    assert_int_equal(-1, ParseS2Polygon("", nullptr));
+    assert_null(polygon.get());
 }
 
-static void test_parse_point(void **state)
+void TestParsePoint(void **state)
 {
     std::unique_ptr<S2LatLng> latLng(nullptr);
     const float epsilon = 0.0000000001;
@@ -59,13 +66,10 @@ static void test_parse_point(void **state)
 
     assert_int_equal(-1, ParseS2LatLng("", &latLng));
     assert_null(latLng.get());
-}
-int main()
-{
-    const struct CMUnitTest tests[] =
-        {
-            cmocka_unit_test(test_parse_polygon),
-            cmocka_unit_test(test_parse_point)};
 
-    return cmocka_run_group_tests(tests, NULL, NULL);
+    assert_int_equal(-1, ParseS2LatLng(nullptr, &latLng));
+    assert_null(latLng.get());
+
+    assert_int_equal(-1, ParseS2LatLng("", nullptr));
+    assert_null(latLng.get());
 }

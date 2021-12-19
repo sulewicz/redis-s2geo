@@ -17,6 +17,13 @@ extern "C"
     typedef struct RedisModuleCallReply RedisModuleCallReply;
 }
 
+class S2Polygon;
+class S2LatLng;
+
+std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *body);
+
+std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *body);
+
 int ValidateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName);
 
 int ValidateEntityName(RedisModuleCtx *ctx, RedisModuleString *indexName);

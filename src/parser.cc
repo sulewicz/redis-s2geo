@@ -25,6 +25,9 @@ enum ParsingState
 
 int ParseS2LatLng(const char *body, std::unique_ptr<S2LatLng> *latLng)
 {
+    if (body == nullptr || latLng == nullptr) {
+        return -1;
+    }
     *latLng = nullptr;
 
     double latitude;
@@ -137,6 +140,9 @@ int ParseS2LatLng(const char *body, std::unique_ptr<S2LatLng> *latLng)
 
 int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
 {
+    if (body == nullptr || polygon == nullptr) {
+        return -1;
+    }
     *polygon = nullptr;
 
     double latitude;

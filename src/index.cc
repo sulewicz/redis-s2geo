@@ -1,4 +1,5 @@
 #include "index.h"
+#include "parser.h"
 #include <string.h>
 
 #define REDISMODULE_API extern
@@ -15,6 +16,32 @@ const char *POLYGON_CELLINFO_SUFFIX = "cellinfo";
 const char ENTITY_DELIM = ':';
 const char *INDEX_PARAMS_KEY = "params";
 const char *INDEX_PARAMS_VALUE = "<index>";
+
+std::unique_ptr<S2Polygon> ParsePolygon(RedisModuleCtx *ctx, RedisModuleString *body)
+{
+    std::unique_ptr<S2Polygon> polygon(nullptr);
+    size_t len;
+    const char *cBody = RedisModule_StringPtrLen(body, &len);
+    int ret = ParseS2Polygon(cBody, &polygon);
+    if (ret != 0)
+    {
+        return nullptr;
+    }
+    return std::move(polygon);
+}
+
+std::unique_ptr<S2LatLng> ParseLatLng(RedisModuleCtx *ctx, RedisModuleString *body)
+{
+    std::unique_ptr<S2LatLng> latLng(nullptr);
+    size_t len;
+    const char *cBody = RedisModule_StringPtrLen(body, &len);
+    int ret = ParseS2LatLng(cBody, &latLng);
+    if (ret != 0)
+    {
+        return nullptr;
+    }
+    return std::move(latLng);
+}
 
 RedisModuleString *CreateIndexMetaHashKey(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {

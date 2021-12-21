@@ -1,0 +1,205 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "stroke": "#555555",
+        "stroke-width": 2,
+        "stroke-opacity": 1,
+        "fill": "#ff0000",
+        "fill-opacity": 0.5,
+        "name": "Red"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -109.072265625,
+              37.055177106660814
+            ],
+            [
+              -101.97509765625,
+              37.055177106660814
+            ],
+            [
+              -101.97509765625,
+              41.0130657870063
+            ],
+            [
+              -109.072265625,
+              41.0130657870063
+            ],
+            [
+              -109.072265625,
+              37.055177106660814
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "stroke": "#555555",
+        "stroke-width": 2,
+        "stroke-opacity": 1,
+        "fill": "#00ff00",
+        "fill-opacity": 0.5,
+        "name": "Green"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -104.12841796875,
+              38.151837403006766
+            ],
+            [
+              -99.66796875,
+              38.151837403006766
+            ],
+            [
+              -99.66796875,
+              39.67337039176558
+            ],
+            [
+              -104.12841796875,
+              39.67337039176558
+            ],
+            [
+              -104.12841796875,
+              38.151837403006766
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "stroke": "#555555",
+        "stroke-width": 2,
+        "stroke-opacity": 1,
+        "fill": "#0000ff",
+        "fill-opacity": 0.5,
+        "name": "Blue"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -97.734375,
+              36.77409249464195
+            ],
+            [
+              -94.10888671875,
+              36.77409249464195
+            ],
+            [
+              -94.10888671875,
+              41.29431726315258
+            ],
+            [
+              -97.734375,
+              41.29431726315258
+            ],
+            [
+              -97.734375,
+              36.77409249464195
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "stroke": "#555555",
+        "stroke-width": 2,
+        "stroke-opacity": 1,
+        "fill": "#ffff00",
+        "fill-opacity": 0.5,
+        "name": "Yellow"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -107.57812499999999,
+              38.496593518947584
+            ],
+            [
+              -106.74316406249999,
+              38.496593518947584
+            ],
+            [
+              -106.74316406249999,
+              39.232253141714885
+            ],
+            [
+              -107.57812499999999,
+              39.232253141714885
+            ],
+            [
+              -107.57812499999999,
+              38.496593518947584
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "marker-color": "#7e7e7e",
+        "marker-size": "medium",
+        "marker-symbol": "circle",
+        "name": "Circle"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -99.8876953125,
+          36.06686213257888
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "marker-color": "#7e7e7e",
+        "marker-size": "medium",
+        "marker-symbol": "triangle",
+        "name": "Triangle"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -103.798828125,
+          40.54720023441049
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "marker-color": "#7e7e7e",
+        "marker-size": "medium",
+        "marker-symbol": "square",
+        "name": "Square"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -107.1826171875,
+          38.92522904714054
+        ]
+      }
+    }
+  ]
+}

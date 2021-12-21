@@ -6,6 +6,10 @@ extern "C"
 #include "geo.h"
 #include "index.h"
 
+#ifdef DEBUG
+int TestCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc);
+#endif
+
 int SetIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     if (argc != 2)
@@ -228,6 +232,10 @@ int GetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     RedisModuleString *polygonBody;
     ret = GetPolygonBody(ctx, indexName, polygonName, &polygonBody);
+    if (ret == S2GEO_ERR_NO_SUCH_POLYGON) {
+        RedisModule_ReplyWithNull(ctx);
+        return REDISMODULE_OK;
+    }
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "invalid polygon");
@@ -277,6 +285,10 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
     }
 
     ret = DeletePolygonCells(ctx, indexName, polygonName);
+    if (ret == S2GEO_ERR_NO_SUCH_POLYGON) {
+        RedisModule_ReplyWithNull(ctx);
+        return REDISMODULE_OK;
+    }
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "polygon cells deletion failed");
@@ -444,6 +456,14 @@ extern "C" int RedisModule_OnLoad(RedisModuleCtx *ctx)
     {
         return REDISMODULE_ERR;
     }
+
+#ifdef DEBUG
+    if (RedisModule_CreateCommand(ctx, "s2geo.test", TestCommand, "write",
+                                  1, 1, 1) == REDISMODULE_ERR)
+    {
+        return REDISMODULE_ERR;
+    }
+#endif
 
     return REDISMODULE_OK;
 }

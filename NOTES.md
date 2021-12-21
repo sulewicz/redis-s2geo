@@ -9,3 +9,6 @@ make install
 S2:
 brew install gflags glog openssl
 cmake -DOPENSSL_ROOT_DIR=`brew --prefix openssl` ..
+
+redis-s2geo:
+cmake -DCMAKE_BUILD_TYPE=Release ..

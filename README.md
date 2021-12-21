@@ -8,4 +8,4 @@ TODO
 
 # How to use
 
-TODO: In the meantime, see TEST.md.
+TODO: In the meantime, see src/redistest/redistest.cc.

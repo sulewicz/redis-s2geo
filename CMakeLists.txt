@@ -17,6 +17,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_package(OpenSSL REQUIRED)
 # pthreads isn't used directly, but this is still required for std::thread.
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+
 if (WIN32)
     # Use unsigned characters
     add_definitions(-J)
@@ -45,7 +47,8 @@ add_library(redis-s2geo SHARED
             src/module.cc
             src/parser.cc
             src/geo.cc
-            src/index.cc)
+            src/index.cc
+            src/redistest/redistest.cc)
 
 target_link_libraries(
     redis-s2geo

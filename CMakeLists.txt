@@ -2,8 +2,14 @@ cmake_minimum_required(VERSION 3.12)
 
 project(redis-s2geo VERSION 0.10.0)
 
-#include(cmake/FetchAbsl.cmake)
-include(cmake/FetchS2.cmake)
+# If OpenSSL is installed in a non-standard location, configure with
+# something like:
+# OPENSSL_ROOT_DIR=/usr/local/opt/openssl cmake ..
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# No compiler-specific extensions, i.e. -std=c++17, not -std=gnu++17.
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Avoid "Policy CMP0042 is not set" warning on macOS.
@@ -11,11 +17,6 @@ if (APPLE)
     set(CMAKE_MACOSX_RPATH TRUE)
     SET(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 endif()
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# No compiler-specific extensions, i.e. -std=c++17, not -std=gnu++17.
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(OpenSSL REQUIRED)
 # pthreads isn't used directly, but this is still required for std::thread.
@@ -38,11 +39,16 @@ else()
     add_definitions(-Wno-deprecated-declarations)
 endif()
 
-# If OpenSSL is installed in a non-standard location, configure with
-# something like:
-# OPENSSL_ROOT_DIR=/usr/local/opt/openssl cmake ..
+if(NOT ABSL_PATH) 
+    message( FATAL_ERROR "Please provide -DABSL_PATH=<ABSL_PATH>" )
+endif()
 
-include_directories(src ${OPENSSL_INCLUDE_DIR})
+set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${ABSL_PATH}")
+
+include(cmake/FetchGoogleTest.cmake)
+find_package(OpenSSL REQUIRED)
+include_directories(src ${OPENSSL_INCLUDE_DIR} "${CMAKE_BINARY_DIR}/googletest/googletest/include")
+include(cmake/FetchS2.cmake)
 
 add_library(redis-s2geo SHARED
             src/module.cc

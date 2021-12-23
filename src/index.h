@@ -2,6 +2,7 @@
 #define INDEX_H
 
 #include <unordered_set>
+#include <memory>
 #include <string>
 
 #define S2GEO_ERR_NO_SUCH_INDEX 1

@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.12)
 
 project(redis-s2geo VERSION 0.10.0)
 
+#include(cmake/FetchAbsl.cmake)
+include(cmake/FetchS2.cmake)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Avoid "Policy CMP0042 is not set" warning on macOS.
 if (APPLE)
@@ -38,10 +41,8 @@ endif()
 # If OpenSSL is installed in a non-standard location, configure with
 # something like:
 # OPENSSL_ROOT_DIR=/usr/local/opt/openssl cmake ..
-include_directories(${OPENSSL_INCLUDE_DIR} /usr/local/include) # TODO: don't assume s2 is here
-link_directories(/usr/local/lib) # TODO: don't assume s2 is here
 
-include_directories(src)
+include_directories(src ${OPENSSL_INCLUDE_DIR})
 
 add_library(redis-s2geo SHARED
             src/module.cc

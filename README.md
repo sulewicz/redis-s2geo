@@ -4,7 +4,25 @@ Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer alg
 
 # How to build
 
-TODO
+## Build absl library (S2 dependency)
+1. git clone https://github.com/abseil/abseil-cpp.git
+1. cd abseil-cpp
+1. mkdir build && cd build
+1. cmake -DCMAKE_INSTALL_PREFIX=<ABSEIL_PATH> -DCMAKE_CXX_STANDARD=17 -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+1. make install
+
+## Build googletest library (S2 dependency)
+1. git clone https://github.com/google/googletest.git
+1. cd googletest
+1. mkdir build && cd build
+1. cmake ..
+1. sudo make install
+
+## Build redis-s2geo
+1. mkdir build && cd build
+1. cmake -DCMAKE_PREFIX_PATH="<ABSEIL_PATH>"  ..
+  1. On Mac you may have to provide -DOPENSSL_ROOT_DIR=`brew --prefix openssl`
+1. make 
 
 # How to use
 

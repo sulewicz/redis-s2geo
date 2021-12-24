@@ -113,11 +113,10 @@ int ValidateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
     const char *cValue = RedisModule_StringPtrLen(value, &len);
     if (strcmp(INDEX_PARAMS_VALUE, cValue) != 0)
     {
-        // TODO: what if somebody changes the value outside of this module?
         return S2GEO_ERR_INVALID_INDEX;
     }
 
-    return 0; // all good
+    return 0;
 }
 
 int ValidateEntityName(RedisModuleCtx *ctx, RedisModuleString *indexName)
@@ -135,7 +134,6 @@ int CreateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
     RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "HSET", "scc", metaHashKey, INDEX_PARAMS_KEY, INDEX_PARAMS_VALUE);
-    // TODO: handle error here
     return 0;
 }
 
@@ -143,19 +141,24 @@ int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
     RedisModuleString *polygonCellInfoPattern = CreatePolygonCellInfoPattern(ctx, indexName);
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "KEYS", "s", polygonCellInfoPattern);
-    // TODO: handle error here
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    {
+        return S2GEO_ERR_UNKNOWN;
+    }
     size_t len = RedisModule_CallReplyLength(reply);
     for (int idx = 0; idx < len; idx++)
     {
         RedisModuleString *key = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(reply, idx));
         // TODO: batch it up and move to scan
         RedisModule_Call(ctx, "DEL", "s", key);
-        // TODO: handle error here
     }
 
     RedisModuleString *indexCellsPattern = CreateIndexCellsPattern(ctx, indexName);
     reply = RedisModule_Call(ctx, "KEYS", "s", indexCellsPattern);
-    // TODO: handle error here
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    {
+        return S2GEO_ERR_UNKNOWN;
+    }
     len = RedisModule_CallReplyLength(reply);
     for (int idx = 0; idx < len; idx++)
     {
@@ -163,16 +166,21 @@ int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
         RedisModuleString *key = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(reply, idx));
         // TODO: batch it up and move to scan
         RedisModule_Call(ctx, "DEL", "s", key);
-        // TODO: handle error here
     }
 
     RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
     reply = RedisModule_Call(ctx, "DEL", "s", polygonsHash);
-    // TODO: handle error here
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    {
+        return S2GEO_ERR_UNKNOWN;
+    }
 
     RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
     reply = RedisModule_Call(ctx, "DEL", "s", metaHashKey);
-    // TODO: handle error here
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    {
+        return S2GEO_ERR_UNKNOWN;
+    }
 
     return 0;
 }
@@ -181,7 +189,6 @@ int SetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModul
 {
     RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "HSET", "sss", polygonsHash, polygonName, polygonBody);
-    // TODO: handle error here
     return 0;
 }
 
@@ -201,7 +208,6 @@ int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisMo
 {
     RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "HDEL", "ss", polygonsHash, polygonName);
-    // TODO: handle error here (e.g, poly does not exist)
     return 0;
 }
 
@@ -211,7 +217,7 @@ int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModu
     std::unique_ptr<RedisModuleString *[]> cellStrings(new RedisModuleString *[cells.size()]);
 
     int idx = 0;
-    for (const auto& cell : cells)
+    for (const auto &cell : cells)
     {
         cellStrings.get()[idx] = RedisModule_CreateString(ctx, cell.c_str(), cell.length());
         idx++;
@@ -252,7 +258,7 @@ int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const 
     std::unique_ptr<RedisModuleString *[]> cellStrings(new RedisModuleString *[cells.size()]);
 
     int idx = 0;
-    for (const auto& cell : cells)
+    for (const auto &cell : cells)
     {
         cellStrings.get()[idx] = CreateIndexCellsSetKeyCStr(ctx, indexName, cell.c_str());
         idx++;

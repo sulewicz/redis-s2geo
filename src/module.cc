@@ -41,7 +41,7 @@ int SetIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
+    RedisModule_ReplyWithSimpleString(ctx, "OK");
 
     return REDISMODULE_OK;
 }
@@ -79,7 +79,7 @@ int GetIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
+    RedisModule_ReplyWithSimpleString(ctx, "OK");
 
     return REDISMODULE_OK;
 }
@@ -103,7 +103,7 @@ int DeleteIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ret = ValidateIndex(ctx, indexName);
     if (ret == S2GEO_ERR_NO_SUCH_INDEX)
     {
-        RedisModule_ReplyWithNull(ctx);
+        RedisModule_ReplyWithLongLong(ctx, 0);
         return REDISMODULE_OK;
     }
     if (ret == S2GEO_ERR_INVALID_INDEX)
@@ -123,7 +123,7 @@ int DeleteIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         RedisModule_ReplyWithError(ctx, "failed to delete the index");
         return REDISMODULE_ERR;
     }
-    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
+    RedisModule_ReplyWithLongLong(ctx, 1);
 
     return REDISMODULE_OK;
 }
@@ -195,7 +195,7 @@ int SetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
 
-    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
+    RedisModule_ReplyWithLongLong(ctx, 1);
     return REDISMODULE_OK;
 }
 
@@ -224,6 +224,11 @@ int GetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     }
 
     ret = ValidateIndex(ctx, indexName);
+    if (ret == S2GEO_ERR_NO_SUCH_INDEX)
+    {
+        RedisModule_ReplyWithNull(ctx);
+        return REDISMODULE_OK;
+    }
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "invalid index");
@@ -271,6 +276,11 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
     }
 
     ret = ValidateIndex(ctx, indexName);
+    if (ret == S2GEO_ERR_NO_SUCH_INDEX)
+    {
+       RedisModule_ReplyWithLongLong(ctx, 0);
+        return REDISMODULE_OK;
+    }
     if (ret != 0)
     {
         RedisModule_ReplyWithError(ctx, "invalid index");
@@ -286,7 +296,7 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
 
     ret = DeletePolygonCells(ctx, indexName, polygonName);
     if (ret == S2GEO_ERR_NO_SUCH_POLYGON) {
-        RedisModule_ReplyWithNull(ctx);
+        RedisModule_ReplyWithLongLong(ctx, 0);
         return REDISMODULE_OK;
     }
     if (ret != 0)
@@ -295,7 +305,7 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
         return REDISMODULE_ERR;
     }
 
-    RedisModule_ReplyWithLongLong(ctx, 1); // TODO: return something meaningful
+    RedisModule_ReplyWithLongLong(ctx, 1);
 
     return REDISMODULE_OK;
 }

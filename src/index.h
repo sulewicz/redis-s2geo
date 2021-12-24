@@ -5,11 +5,11 @@
 #include <memory>
 #include <string>
 
-#define S2GEO_ERR_NO_SUCH_INDEX 1
-#define S2GEO_ERR_INVALID_INDEX 2
-#define S2GEO_ERR_INVALID_ENTITY_NAME 3
-
-#define S2GEO_ERR_NO_SUCH_POLYGON 1
+#define S2GEO_ERR_UNKNOWN 1
+#define S2GEO_ERR_NO_SUCH_INDEX 2
+#define S2GEO_ERR_INVALID_INDEX 3
+#define S2GEO_ERR_INVALID_ENTITY_NAME 4
+#define S2GEO_ERR_NO_SUCH_POLYGON 5
 
 extern "C"
 {

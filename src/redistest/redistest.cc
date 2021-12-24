@@ -125,8 +125,8 @@ int TestIndex(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     // Create the index
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "S2GEO.ISET", "c", kTestIndexName);
-    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_INTEGER, reply);
-    ASSERT_INT_EQUAL("could not create the index", 1, (int)RedisModule_CallReplyInteger(reply));
+    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_STRING, reply);
+    ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
 
     // Try to overwrite the index
     reply = RedisModule_Call(ctx, "S2GEO.ISET", "c", kTestIndexName);
@@ -134,8 +134,8 @@ int TestIndex(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     // Get the index
     reply = RedisModule_Call(ctx, "S2GEO.IGET", "c", kTestIndexName);
-    ASSERT_REDIS_TYPE_EQUAL("could not fetch index", REDISMODULE_REPLY_INTEGER, reply);
-    ASSERT_INT_EQUAL("could not fetch the index", 1, (int)RedisModule_CallReplyInteger(reply));
+    ASSERT_REDIS_TYPE_EQUAL("could not fetch the index", REDISMODULE_REPLY_STRING, reply);
+    ASSERT_REDIS_STRING_EQUAL("could not fetch the index", "OK", reply);
 
     // Delete the index
     reply = RedisModule_Call(ctx, "S2GEO.IDEL", "c", kTestIndexName);
@@ -144,7 +144,8 @@ int TestIndex(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     // Try to delete a non-existing index
     reply = RedisModule_Call(ctx, "S2GEO.IDEL", "c", kTestIndexName);
-    ASSERT_REDIS_TYPE_EQUAL("should not delete the index", REDISMODULE_REPLY_NULL, reply);
+    ASSERT_REDIS_TYPE_EQUAL("should not delete the index", REDISMODULE_REPLY_INTEGER, reply);
+    ASSERT_INT_EQUAL("should not delete the index", 0, (int)RedisModule_CallReplyInteger(reply));
 
     // Try to get a non-existing index
     reply = RedisModule_Call(ctx, "S2GEO.IGET", "c", kTestIndexName);
@@ -157,8 +158,8 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     // Create the index
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "S2GEO.ISET", "c", kTestIndexName);
-    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_INTEGER, reply);
-    ASSERT_INT_EQUAL("could not create the index", 1, (int)RedisModule_CallReplyInteger(reply));
+    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_STRING, reply);
+    ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
 
     // Create the polygon
     reply = RedisModule_Call(ctx, "S2GEO.POLYSET", "ccc", kTestIndexName, kPolygonName[POLYGON_RED], kPolygonBody[POLYGON_RED]);
@@ -180,7 +181,8 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     // Try to delete a non-existing polygon
     reply = RedisModule_Call(ctx, "S2GEO.POLYDEL", "cc", kTestIndexName, kPolygonName[POLYGON_RED]);
-    ASSERT_REDIS_TYPE_EQUAL("should not delete the polygon", REDISMODULE_REPLY_NULL, reply);
+    ASSERT_REDIS_TYPE_EQUAL("should not delete the polygon", REDISMODULE_REPLY_INTEGER, reply);
+    ASSERT_INT_EQUAL("should not delete the polygon", 0, (int)RedisModule_CallReplyInteger(reply));
 
     // Delete the index
     reply = RedisModule_Call(ctx, "S2GEO.IDEL", "c", kTestIndexName);
@@ -189,7 +191,7 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     // Try to get a non-existing polygon from a non-existing index
     reply = RedisModule_Call(ctx, "S2GEO.POLYGET", "cc", kTestIndexName, kPolygonName[POLYGON_RED]);
-    ASSERT_REDIS_TYPE_EQUAL("should not fetch the polygon", REDISMODULE_REPLY_ERROR, reply);
+    ASSERT_REDIS_TYPE_EQUAL("should not fetch the polygon", REDISMODULE_REPLY_NULL, reply);
 
     return REDISMODULE_OK;
 }
@@ -198,8 +200,8 @@ int TestPointSearch(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     // Create the index
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "S2GEO.ISET", "c", kTestIndexName);
-    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_INTEGER, reply);
-    ASSERT_INT_EQUAL("could not create the index", 1, (int)RedisModule_CallReplyInteger(reply));
+    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_STRING, reply);
+    ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
 
     // Set up all the polygons, see test_data.png.
     for (int idx = 0; idx < POLYGON_COUNT; idx++)
@@ -242,8 +244,8 @@ int TestPolygonSearch(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     // Create the index
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "S2GEO.ISET", "c", kTestIndexName);
-    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_INTEGER, reply);
-    ASSERT_INT_EQUAL("could not create the index", 1, (int)RedisModule_CallReplyInteger(reply));
+    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_STRING, reply);
+    ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
 
     // Set up all the polygons, see test_data.png.
     for (int idx = 0; idx < POLYGON_COUNT; idx++)

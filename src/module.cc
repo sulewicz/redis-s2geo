@@ -8,6 +8,7 @@ extern "C"
 
 #ifdef DEBUG
 int TestCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc);
+int PopulateCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc);
 #endif
 
 int SetIndexCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
@@ -517,6 +518,12 @@ extern "C" int RedisModule_OnLoad(RedisModuleCtx *ctx)
 
 #ifdef DEBUG
     if (RedisModule_CreateCommand(ctx, "s2geo.test", TestCommand, "write",
+                                  1, 1, 1) == REDISMODULE_ERR)
+    {
+        return REDISMODULE_ERR;
+    }
+
+    if (RedisModule_CreateCommand(ctx, "s2geo.populate", PopulateCommand, "write",
                                   1, 1, 1) == REDISMODULE_ERR)
     {
         return REDISMODULE_ERR;

@@ -139,44 +139,35 @@ int CreateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 
 int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 {
-    RedisModuleString *polygonCellInfoPattern = CreatePolygonCellInfoPattern(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "KEYS", "s", polygonCellInfoPattern);
-    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    RedisModuleCallReply *polygons;
+    int ret = ListPolygons(ctx, indexName, &polygons);
+    if (ret != 0)
     {
-        return S2GEO_ERR_UNKNOWN;
+        return ret;
     }
-    size_t len = RedisModule_CallReplyLength(reply);
-    for (int idx = 0; idx < len; idx++)
+    size_t len = RedisModule_CallReplyLength(polygons);
+    for (size_t i = 0; i < len; i++)
     {
-        RedisModuleString *key = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(reply, idx));
-        // TODO: batch it up and move to scan
-        RedisModule_Call(ctx, "DEL", "s", key);
-    }
+        RedisModuleString *polygonName = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(polygons, i));
+        ret = DeletePolygonBody(ctx, indexName, polygonName);
+        if (ret != 0)
+        {
+            return S2GEO_ERR_UNKNOWN;
+        }
 
-    RedisModuleString *indexCellsPattern = CreateIndexCellsPattern(ctx, indexName);
-    reply = RedisModule_Call(ctx, "KEYS", "s", indexCellsPattern);
-    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
-    {
-        return S2GEO_ERR_UNKNOWN;
-    }
-    len = RedisModule_CallReplyLength(reply);
-    for (int idx = 0; idx < len; idx++)
-    {
-        size_t cLen;
-        RedisModuleString *key = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(reply, idx));
-        // TODO: batch it up and move to scan
-        RedisModule_Call(ctx, "DEL", "s", key);
-    }
-
-    RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
-    reply = RedisModule_Call(ctx, "DEL", "s", polygonsHash);
-    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
-    {
-        return S2GEO_ERR_UNKNOWN;
+        ret = DeletePolygonCells(ctx, indexName, polygonName);
+        if (ret == S2GEO_ERR_NO_SUCH_POLYGON)
+        {
+            return S2GEO_ERR_UNKNOWN;
+        }
+        if (ret != 0)
+        {
+            return S2GEO_ERR_UNKNOWN;
+        }
     }
 
     RedisModuleString *metaHashKey = CreateIndexMetaHashKey(ctx, indexName);
-    reply = RedisModule_Call(ctx, "DEL", "s", metaHashKey);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "DEL", "s", metaHashKey);
     if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
     {
         return S2GEO_ERR_UNKNOWN;
@@ -188,7 +179,8 @@ int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
 int ListPolygons(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleCallReply **polygons)
 {
     RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
-    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HKEYS", "s", polygonsHash);;
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HKEYS", "s", polygonsHash);
+    ;
     if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
     {
         return S2GEO_ERR_UNKNOWN;
@@ -237,7 +229,7 @@ int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModu
     }
 
     RedisModuleCallReply *reply = RedisModule_Call(ctx, "SADD", "sv", cellInfoSetKey, cellStrings.get(), cells.size());
-    for (int idx = 0; idx < cells.size(); idx++)
+    for (size_t idx = 0; idx < cells.size(); idx++)
     {
         RedisModuleString *indexCellsHashKey = CreateIndexCellsSetKey(ctx, indexName, cellStrings.get()[idx]);
         RedisModule_Call(ctx, "SADD", "ss", indexCellsHashKey, polygonName);
@@ -257,7 +249,7 @@ int DeletePolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisM
 
     RedisModule_Call(ctx, "DEL", "s", cellInfoSetKey);
 
-    for (int idx = 0; idx < len; idx++)
+    for (size_t idx = 0; idx < len; idx++)
     {
         RedisModuleString *cellId = RedisModule_CreateStringFromCallReply(RedisModule_CallReplyArrayElement(cells, idx));
         RedisModuleString *indexCellsHashKey = CreateIndexCellsSetKey(ctx, indexName, cellId);

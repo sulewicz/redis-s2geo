@@ -112,7 +112,7 @@ std::unordered_set<std::string> RedisArrayToSet(RedisModuleCallReply *array)
 {
     std::unordered_set<std::string> ret;
     size_t len = RedisModule_CallReplyLength(array);
-    for (int i = 0; i < len; i++)
+    for (size_t i = 0; i < len; i++)
     {
         size_t strLen;
         const char *str = RedisModule_CallReplyStringPtr(RedisModule_CallReplyArrayElement(array, i), &strLen);
@@ -220,7 +220,7 @@ int TestPointSearch(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
 
     // Set up all the polygons, see test_data.png.
-    for (int idx = 0; idx < POLYGON_COUNT; idx++)
+    for (size_t idx = 0; idx < POLYGON_COUNT; idx++)
     {
         reply = RedisModule_Call(ctx, "S2GEO.POLYSET", "ccc", kTestIndexName, kPolygonName[idx], kPolygonBody[idx]);
         ASSERT_REDIS_TYPE_EQUAL("could not create the polygon", REDISMODULE_REPLY_INTEGER, reply);
@@ -264,7 +264,7 @@ int TestPolygonSearch(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
 
     // Set up all the polygons, see test_data.png.
-    for (int idx = 0; idx < POLYGON_COUNT; idx++)
+    for (size_t idx = 0; idx < POLYGON_COUNT; idx++)
     {
         reply = RedisModule_Call(ctx, "S2GEO.POLYSET", "ccc", kTestIndexName, kPolygonName[idx], kPolygonBody[idx]);
         ASSERT_REDIS_TYPE_EQUAL("could not create the polygon", REDISMODULE_REPLY_INTEGER, reply);
@@ -292,7 +292,7 @@ int TestPolygonSearch(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ASSERT_SET_EQUAL("wrong polygon search response", std::unordered_set<std::string>({kPolygonName[POLYGON_YELLOW], kPolygonName[POLYGON_RED]}), RedisArrayToSet(reply));
 
     // Delete the polygons
-    for (int idx = 0; idx < POLYGON_COUNT; idx++)
+    for (size_t idx = 0; idx < POLYGON_COUNT; idx++)
     {
         reply = RedisModule_Call(ctx, "S2GEO.POLYDEL", "cc", kTestIndexName, kPolygonName[idx]);
         ASSERT_REDIS_TYPE_EQUAL("could not delete the polygon", REDISMODULE_REPLY_INTEGER, reply);
@@ -334,6 +334,26 @@ int TestCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     if (TestPolygonSearch(ctx, argv, argc) != REDISMODULE_OK)
     {
         return REDISMODULE_ERR;
+    }
+
+    RedisModule_ReplyWithCString(ctx, "OK");
+    return REDISMODULE_OK;
+}
+
+int PopulateCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
+{
+    RedisModule_AutoMemory(ctx);
+    // Create the index
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "S2GEO.ISET", "c", kTestIndexName);
+    ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_STRING, reply);
+    ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
+
+    // Set up all the polygons, see test_data.png.
+    for (size_t idx = 0; idx < POLYGON_COUNT; idx++)
+    {
+        reply = RedisModule_Call(ctx, "S2GEO.POLYSET", "ccc", kTestIndexName, kPolygonName[idx], kPolygonBody[idx]);
+        ASSERT_REDIS_TYPE_EQUAL("could not create the polygon", REDISMODULE_REPLY_INTEGER, reply);
+        ASSERT_INT_EQUAL("could not create the polygon", 1, (int)RedisModule_CallReplyInteger(reply));
     }
 
     RedisModule_ReplyWithCString(ctx, "OK");

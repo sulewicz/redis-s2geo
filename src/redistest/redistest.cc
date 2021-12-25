@@ -161,10 +161,21 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ASSERT_REDIS_TYPE_EQUAL("could not create the index", REDISMODULE_REPLY_STRING, reply);
     ASSERT_REDIS_STRING_EQUAL("could not create the index", "OK", reply);
 
+    // List polygons (empty)
+    reply = RedisModule_Call(ctx, "S2GEO.POLYLIST", "c", kTestIndexName);
+    ASSERT_REDIS_TYPE_EQUAL("could not list polygons", REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL("incorrect number of polygons returned", 0, (int)RedisModule_CallReplyLength(reply));
+
     // Create the polygon
     reply = RedisModule_Call(ctx, "S2GEO.POLYSET", "ccc", kTestIndexName, kPolygonName[POLYGON_RED], kPolygonBody[POLYGON_RED]);
     ASSERT_REDIS_TYPE_EQUAL("could not create the polygon", REDISMODULE_REPLY_INTEGER, reply);
     ASSERT_INT_EQUAL("could not create the polygon", 1, (int)RedisModule_CallReplyInteger(reply));
+
+    // List polygons (one polygon)
+    reply = RedisModule_Call(ctx, "S2GEO.POLYLIST", "c", kTestIndexName);
+    ASSERT_REDIS_TYPE_EQUAL("could not list polygons", REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL("incorrect number of polygons returned", 1, (int)RedisModule_CallReplyLength(reply));
+    ASSERT_SET_EQUAL("incorrect polygons returned", std::unordered_set<std::string>({kPolygonName[POLYGON_RED]}), RedisArrayToSet(reply));
 
     // Get the polygon
     reply = RedisModule_Call(ctx, "S2GEO.POLYGET", "cc", kTestIndexName, kPolygonName[POLYGON_RED]);
@@ -192,6 +203,11 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     // Try to get a non-existing polygon from a non-existing index
     reply = RedisModule_Call(ctx, "S2GEO.POLYGET", "cc", kTestIndexName, kPolygonName[POLYGON_RED]);
     ASSERT_REDIS_TYPE_EQUAL("should not fetch the polygon", REDISMODULE_REPLY_NULL, reply);
+
+    // Try to get list of polygons from a non-existing index (empty)
+    reply = RedisModule_Call(ctx, "S2GEO.POLYLIST", "c", kTestIndexName);
+    ASSERT_REDIS_TYPE_EQUAL("could not list polygons", REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL("incorrect number of polygons returned", 0, (int)RedisModule_CallReplyLength(reply));
 
     return REDISMODULE_OK;
 }

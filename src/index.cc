@@ -185,6 +185,19 @@ int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName)
     return 0;
 }
 
+int ListPolygons(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleCallReply **polygons)
+{
+    RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HKEYS", "s", polygonsHash);;
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    {
+        return S2GEO_ERR_UNKNOWN;
+    }
+
+    *polygons = reply;
+    return 0;
+}
+
 int SetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString *polygonBody)
 {
     RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
@@ -263,7 +276,12 @@ int GetPolygonsInCells(RedisModuleCtx *ctx, RedisModuleString *indexName, const 
         cellStrings.get()[idx] = CreateIndexCellsSetKeyCStr(ctx, indexName, cell.c_str());
         idx++;
     }
-    *polygons = RedisModule_Call(ctx, "SUNION", "v", cellStrings.get(), cells.size());
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "SUNION", "v", cellStrings.get(), cells.size());
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    {
+        return S2GEO_ERR_UNKNOWN;
+    }
 
+    *polygons = reply;
     return 0;
 }

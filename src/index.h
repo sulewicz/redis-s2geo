@@ -33,6 +33,8 @@ int CreateIndex(RedisModuleCtx *ctx, RedisModuleString *indexName);
 
 int DeleteIndex(RedisModuleCtx *ctx, RedisModuleString *indexName);
 
+int ListPolygons(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleCallReply **polygons);
+
 int SetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString *polygonBody);
 
 int GetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString **output);

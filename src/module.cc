@@ -237,7 +237,8 @@ int GetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 
     RedisModuleString *polygonBody;
     ret = GetPolygonBody(ctx, indexName, polygonName, &polygonBody);
-    if (ret == S2GEO_ERR_NO_SUCH_POLYGON) {
+    if (ret == S2GEO_ERR_NO_SUCH_POLYGON)
+    {
         RedisModule_ReplyWithNull(ctx);
         return REDISMODULE_OK;
     }
@@ -278,7 +279,7 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
     ret = ValidateIndex(ctx, indexName);
     if (ret == S2GEO_ERR_NO_SUCH_INDEX)
     {
-       RedisModule_ReplyWithLongLong(ctx, 0);
+        RedisModule_ReplyWithLongLong(ctx, 0);
         return REDISMODULE_OK;
     }
     if (ret != 0)
@@ -295,7 +296,8 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
     }
 
     ret = DeletePolygonCells(ctx, indexName, polygonName);
-    if (ret == S2GEO_ERR_NO_SUCH_POLYGON) {
+    if (ret == S2GEO_ERR_NO_SUCH_POLYGON)
+    {
         RedisModule_ReplyWithLongLong(ctx, 0);
         return REDISMODULE_OK;
     }
@@ -306,6 +308,46 @@ int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc
     }
 
     RedisModule_ReplyWithLongLong(ctx, 1);
+
+    return REDISMODULE_OK;
+}
+
+int ListPolygonsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
+{
+    if (argc != 2)
+    {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModule_AutoMemory(ctx);
+
+    RedisModuleString *indexName = argv[1];
+    int ret = ValidateEntityName(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index name");
+        return REDISMODULE_ERR;
+    }
+
+    ret = ValidateIndex(ctx, indexName);
+    if (ret == S2GEO_ERR_NO_SUCH_INDEX)
+    {
+        RedisModule_ReplyWithEmptyArray(ctx);
+        return REDISMODULE_OK;
+    }
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index");
+        return REDISMODULE_ERR;
+    }
+
+    RedisModuleCallReply *polygons;
+    ret = ListPolygons(ctx, indexName, &polygons);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "error while fetching polygons");
+        return REDISMODULE_ERR;
+    }
+    RedisModule_ReplyWithCallReply(ctx, polygons);
 
     return REDISMODULE_OK;
 }
@@ -450,6 +492,12 @@ extern "C" int RedisModule_OnLoad(RedisModuleCtx *ctx)
     }
 
     if (RedisModule_CreateCommand(ctx, "s2geo.polydel", DeletePolygonCommand, "write",
+                                  1, 1, 1) == REDISMODULE_ERR)
+    {
+        return REDISMODULE_ERR;
+    }
+
+    if (RedisModule_CreateCommand(ctx, "s2geo.polylist", ListPolygonsCommand, "readonly",
                                   1, 1, 1) == REDISMODULE_ERR)
     {
         return REDISMODULE_ERR;

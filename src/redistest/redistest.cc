@@ -58,6 +58,7 @@ size_t len;
     }
 
 const char *kTestIndexName = "testindex";
+const char *kTestIndexPattern = "testindex:*";
 
 enum Polygons
 {
@@ -119,6 +120,15 @@ std::unordered_set<std::string> RedisArrayToSet(RedisModuleCallReply *array)
         ret.insert(std::string(str, strLen));
     }
     return ret;
+}
+
+int ValidateTestCondition(RedisModuleCtx *ctx, const char *message)
+{
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "KEYS", "c", kTestIndexPattern);
+    ASSERT_REDIS_TYPE_EQUAL(message, REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL(message, 0, (int)RedisModule_CallReplyLength(reply));
+
+    return REDISMODULE_OK;
 }
 
 int TestIndex(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
@@ -319,6 +329,11 @@ int TestPolygonSearch(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 int TestCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     RedisModule_AutoMemory(ctx);
+
+    if (ValidateTestCondition(ctx, "could not start the test: stale data detected") != REDISMODULE_OK)
+    {
+        return REDISMODULE_ERR;
+    }
     if (TestIndex(ctx, argv, argc) != REDISMODULE_OK)
     {
         return REDISMODULE_ERR;
@@ -332,6 +347,10 @@ int TestCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
         return REDISMODULE_ERR;
     }
     if (TestPolygonSearch(ctx, argv, argc) != REDISMODULE_OK)
+    {
+        return REDISMODULE_ERR;
+    }
+    if (ValidateTestCondition(ctx, "test failed: orphaned data detected") != REDISMODULE_OK)
     {
         return REDISMODULE_ERR;
     }

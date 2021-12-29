@@ -44,11 +44,22 @@ if(NOT ABSL_PATH)
 endif()
 
 set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${ABSL_PATH}")
+include_directories("${ABSL_PATH}/include")
 
-include(cmake/FetchGoogleTest.cmake)
+include_directories(src)
+
 find_package(OpenSSL REQUIRED)
-include_directories(src ${OPENSSL_INCLUDE_DIR} "${CMAKE_BINARY_DIR}/googletest/googletest/include")
-include(cmake/FetchS2.cmake)
+include_directories("${OPENSSL_INCLUDE_DIR}")
+
+if(S2_PATH)
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${S2_PATH}")
+    include_directories("${OPENSSL_INCLUDE_DIR}" "${S2_PATH}/include")
+    link_directories("${S2_PATH}/lib")
+else()
+    include(cmake/FetchGoogleTest.cmake)
+    include_directories("${CMAKE_BINARY_DIR}/googletest/googletest/include")
+    include(cmake/FetchS2.cmake)
+endif()
 
 add_library(redis-s2geo SHARED
             src/module.cc
@@ -69,7 +80,13 @@ set_target_properties(redis-s2geo PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}
     VERSION ${PROJECT_VERSION})
 
-include(cmake/FetchCMocka.cmake)
+if(CMOCKA_PATH)
+    set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${CMOCKA_PATH}")
+    include_directories("${CMOCKA_PATH}/include")
+    link_directories("${CMOCKA_PATH}/lib")
+else()
+    include(cmake/FetchCMocka.cmake)
+endif()
 
 add_executable(redis-s2geo-test
     src/unittest/test_parser.cc

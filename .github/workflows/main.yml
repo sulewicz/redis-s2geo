@@ -158,8 +158,11 @@ jobs:
         run: ${{github.workspace}}/output/redis-s2geo/build/redis-s2geo-test
 
       - name: redis-s2geo - Archive
+        run: ${{github.workspace}}/archive.sh ${{github.workspace}}/output/redis-s2geo/ redis-s2geo-${{ runner.os }}
+
+      - name: redis-s2geo - Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: redis-s2geo-${{ runner.os }}
           path: |
-            ${{github.workspace}}/output/redis-s2geo/build/libredis-s2geo.*so
+            ${{github.workspace}}/output/redis-s2geo/build/redis-s2geo-${{ runner.os }}.tar.gz

@@ -209,6 +209,18 @@ int GetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModul
     return 0;
 }
 
+int GetPolygonBodies(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString **polygonNames, size_t polygonCount, RedisModuleCallReply **output)
+{
+    RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);
+    RedisModuleCallReply *reply = RedisModule_Call(ctx, "HMGET", "sv", polygonsHash, polygonNames, polygonCount);
+    if (RedisModule_CallReplyType(reply) == REDISMODULE_REPLY_ERROR)
+    {
+        return S2GEO_ERR_UNKNOWN;
+    }
+    *output = reply;
+    return 0;
+}
+
 int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName)
 {
     RedisModuleString *polygonsHash = CreateIndexPolygonsHashKey(ctx, indexName);

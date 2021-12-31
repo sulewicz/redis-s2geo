@@ -39,6 +39,8 @@ int SetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModul
 
 int GetPolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, RedisModuleString **output);
 
+int GetPolygonBodies(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString **polygonNames, size_t polygonCount, RedisModuleCallReply **output);
+
 int DeletePolygonBody(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName);
 
 int SetPolygonCells(RedisModuleCtx *ctx, RedisModuleString *indexName, RedisModuleString *polygonName, const std::unordered_set<std::string> &cells);

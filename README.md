@@ -127,7 +127,9 @@ Fetches polygon body from the index.
 #### Return values
 Simple string reply: Body of the polygon.
 
-Null reply: (nil) if the polygon does not exist, the index does not exist, or the provided key is not an index.
+Null reply: (nil) if the polygon does not exist or the index does not exist.
+
+Error reply: Error if the provided key is not an index, or the polygon name is invalid.
 
 #### Examples
 ```
@@ -139,6 +141,26 @@ redis> S2GEO.POLYGET index nosuchpolygon
 
 redis S2GEO.POLYGET nosuchindex polygon
 (nil)
+```
+
+### S2GEO.POLYMGET index polygonName
+Fetches multiple polygon bodies from the index.
+
+#### Return values
+Array reply: list of polygon bodies associated with the given polygon names, in the same order as they are requested.
+
+Error reply: Error if the provided key is not an index, or the polygon names are invalid.
+
+#### Examples
+```
+redis> S2GEO.POLYMGET testindex blue red nosuchpolygon
+1) "[[[-97.734375,36.77409249464195],[-94.10888671875,36.77409249464195],[-94.10888671875,41.29431726315258],[-97.734375,41.29431726315258],[-97.734375,36.77409249464195]]]"
+2) "[[[-109.072265625,37.055177106660814],[-101.97509765625,37.055177106660814],[-101.97509765625,41.0130657870063],[-109.072265625,41.0130657870063],[-109.072265625,37.055177106660814]]]"
+3) (nil)
+redis> S2GEO.POLYMGET nosuchindex blue red nosuchpolygon
+1) (nil)
+2) (nil)
+3) (nil)
 ```
 
 ### S2GEO.POLYDEL index polygonName

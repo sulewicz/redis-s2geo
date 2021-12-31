@@ -176,16 +176,25 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ASSERT_REDIS_TYPE_EQUAL("could not list polygons", REDISMODULE_REPLY_ARRAY, reply);
     ASSERT_INT_EQUAL("incorrect number of polygons returned", 0, (int)RedisModule_CallReplyLength(reply));
 
-    // Create the polygon
-    reply = RedisModule_Call(ctx, "S2GEO.POLYSET", "ccc", kTestIndexName, kPolygonName[POLYGON_RED], kPolygonBody[POLYGON_RED]);
-    ASSERT_REDIS_TYPE_EQUAL("could not create the polygon", REDISMODULE_REPLY_INTEGER, reply);
-    ASSERT_INT_EQUAL("could not create the polygon", 1, (int)RedisModule_CallReplyInteger(reply));
+    // Set up all the polygons, see test_data.png.
+    for (size_t idx = 0; idx < POLYGON_COUNT; idx++)
+    {
+        reply = RedisModule_Call(ctx, "S2GEO.POLYSET", "ccc", kTestIndexName, kPolygonName[idx], kPolygonBody[idx]);
+        ASSERT_REDIS_TYPE_EQUAL("could not create the polygon", REDISMODULE_REPLY_INTEGER, reply);
+        ASSERT_INT_EQUAL("could not create the polygon", 1, (int)RedisModule_CallReplyInteger(reply));
+    }
 
-    // List polygons (one polygon)
+    // List polygons (four polygons)
     reply = RedisModule_Call(ctx, "S2GEO.POLYLIST", "c", kTestIndexName);
     ASSERT_REDIS_TYPE_EQUAL("could not list polygons", REDISMODULE_REPLY_ARRAY, reply);
-    ASSERT_INT_EQUAL("incorrect number of polygons returned", 1, (int)RedisModule_CallReplyLength(reply));
-    ASSERT_SET_EQUAL("incorrect polygons returned", std::unordered_set<std::string>({kPolygonName[POLYGON_RED]}), RedisArrayToSet(reply));
+    ASSERT_INT_EQUAL("incorrect number of polygons returned", POLYGON_COUNT, (int)RedisModule_CallReplyLength(reply));
+    ASSERT_SET_EQUAL("incorrect polygons returned", std::unordered_set<std::string>({kPolygonName[POLYGON_RED], kPolygonName[POLYGON_GREEN], kPolygonName[POLYGON_BLUE], kPolygonName[POLYGON_YELLOW]}), RedisArrayToSet(reply));
+
+    // Get all polygon bodies
+    reply = RedisModule_Call(ctx, "S2GEO.POLYMGET", "ccccc", kTestIndexName, kPolygonName[POLYGON_RED], kPolygonName[POLYGON_GREEN], kPolygonName[POLYGON_BLUE], kPolygonName[POLYGON_YELLOW]);
+    ASSERT_REDIS_TYPE_EQUAL("could not fetch the polygon bodies", REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL("incorrect number of polygon bodies returned", 4, (int)RedisModule_CallReplyLength(reply));
+    ASSERT_SET_EQUAL("incorrect polygon bodies returned", std::unordered_set<std::string>({kPolygonBody[POLYGON_RED], kPolygonBody[POLYGON_GREEN], kPolygonBody[POLYGON_BLUE], kPolygonBody[POLYGON_YELLOW]}), RedisArrayToSet(reply));
 
     // Get the polygon
     reply = RedisModule_Call(ctx, "S2GEO.POLYGET", "cc", kTestIndexName, kPolygonName[POLYGON_RED]);
@@ -205,6 +214,14 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ASSERT_REDIS_TYPE_EQUAL("should not delete the polygon", REDISMODULE_REPLY_INTEGER, reply);
     ASSERT_INT_EQUAL("should not delete the polygon", 0, (int)RedisModule_CallReplyInteger(reply));
 
+    // Try to get a non-existing polygons
+    reply = RedisModule_Call(ctx, "S2GEO.POLYMGET", "ccc", kTestIndexName, kPolygonName[POLYGON_RED], kPolygonName[POLYGON_BLUE]);
+    ASSERT_REDIS_TYPE_EQUAL("should return array of bodies", REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL("incorrect number of polygon bodies returned", 2, (int)RedisModule_CallReplyLength(reply));
+    ASSERT_REDIS_TYPE_EQUAL("should return null as a polygon body", REDISMODULE_REPLY_NULL, RedisModule_CallReplyArrayElement(reply, 0));
+    ASSERT_REDIS_TYPE_EQUAL("should return correct polygon body", REDISMODULE_REPLY_STRING, RedisModule_CallReplyArrayElement(reply, 1));
+    ASSERT_REDIS_STRING_EQUAL("should return correct polygon body", kPolygonBody[POLYGON_BLUE], RedisModule_CallReplyArrayElement(reply, 1));
+
     // Delete the index
     reply = RedisModule_Call(ctx, "S2GEO.IDEL", "c", kTestIndexName);
     ASSERT_REDIS_TYPE_EQUAL("could not delete the index", REDISMODULE_REPLY_INTEGER, reply);
@@ -213,6 +230,12 @@ int TestPolygons(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     // Try to get a non-existing polygon from a non-existing index
     reply = RedisModule_Call(ctx, "S2GEO.POLYGET", "cc", kTestIndexName, kPolygonName[POLYGON_RED]);
     ASSERT_REDIS_TYPE_EQUAL("should not fetch the polygon", REDISMODULE_REPLY_NULL, reply);
+
+    // Try to get a non-existing polygons from a non-existing index
+    reply = RedisModule_Call(ctx, "S2GEO.POLYMGET", "cc", kTestIndexName, kPolygonName[POLYGON_RED]);
+    ASSERT_REDIS_TYPE_EQUAL("should return array of bodies", REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL("incorrect number of polygon bodies returned", 1, (int)RedisModule_CallReplyLength(reply));
+    ASSERT_REDIS_TYPE_EQUAL("should return null as a polygon body", REDISMODULE_REPLY_NULL, RedisModule_CallReplyArrayElement(reply, 0));
 
     // Try to get list of polygons from a non-existing index (empty)
     reply = RedisModule_Call(ctx, "S2GEO.POLYLIST", "c", kTestIndexName);

@@ -253,6 +253,62 @@ int GetPolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     return REDISMODULE_OK;
 }
 
+int GetMultiplePolygonsCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
+{
+    if (argc < 3)
+    {
+        return RedisModule_WrongArity(ctx);
+    }
+    RedisModule_AutoMemory(ctx);
+
+    RedisModuleString *indexName = argv[1];
+    RedisModuleString **polygonNames = &argv[2];
+    size_t polygonCount = argc - 2;
+    int ret = ValidateEntityName(ctx, indexName);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index name");
+        return REDISMODULE_ERR;
+    }
+
+    for (size_t i = 0; i < polygonCount; i++)
+    {
+        ret = ValidateEntityName(ctx, polygonNames[i]);
+        if (ret != 0)
+        {
+            RedisModule_ReplyWithError(ctx, "invalid polygon name");
+            return REDISMODULE_ERR;
+        }
+    }
+
+    ret = ValidateIndex(ctx, indexName);
+    if (ret == S2GEO_ERR_NO_SUCH_INDEX)
+    {
+        RedisModule_ReplyWithArray(ctx, polygonCount);
+        for (size_t i = 0; i < polygonCount; i++)
+        {
+            RedisModule_ReplyWithNull(ctx);
+        }
+        return REDISMODULE_OK;
+    }
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid index");
+        return REDISMODULE_ERR;
+    }
+
+    RedisModuleCallReply *reply;
+    ret = GetPolygonBodies(ctx, indexName, polygonNames, polygonCount, &reply);
+    if (ret != 0)
+    {
+        RedisModule_ReplyWithError(ctx, "invalid polygon");
+        return REDISMODULE_ERR;
+    }
+    RedisModule_ReplyWithCallReply(ctx, reply);
+
+    return REDISMODULE_OK;
+}
+
 int DeletePolygonCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
 {
     if (argc != 3)
@@ -487,6 +543,12 @@ extern "C" int RedisModule_OnLoad(RedisModuleCtx *ctx)
     }
 
     if (RedisModule_CreateCommand(ctx, "s2geo.polyget", GetPolygonCommand, "readonly",
+                                  1, 1, 1) == REDISMODULE_ERR)
+    {
+        return REDISMODULE_ERR;
+    }
+
+    if (RedisModule_CreateCommand(ctx, "s2geo.polymget", GetMultiplePolygonsCommand, "readonly",
                                   1, 1, 1) == REDISMODULE_ERR)
     {
         return REDISMODULE_ERR;

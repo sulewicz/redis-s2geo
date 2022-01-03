@@ -14,6 +14,7 @@ Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer alg
     * [S2GEO.IDEL index](#s2geoidel-index)
     * [S2GEO.POLYSET index polygonName polygonBody](#s2geopolyset-index-polygonname-polygonbody)
     * [S2GEO.POLYGET index polygonName](#s2geopolyget-index-polygonname)
+    * [S2GEO.POLYMGET index polygonName [polygonName ...]](#s2geopolymget-index-polygonname-polygonname)
     * [S2GEO.POLYDEL index polygonName](#s2geopolydel-index-polygonname)
     * [S2GEO.POLYLIST index](#s2geopolylist-index)
     * [S2GEO.POLYSEARCH index polygonBody](#s2geopolysearch-index-polygonbody)
@@ -143,7 +144,7 @@ redis S2GEO.POLYGET nosuchindex polygon
 (nil)
 ```
 
-### S2GEO.POLYMGET index polygonName
+### S2GEO.POLYMGET index polygonName [polygonName ...]
 Fetches multiple polygon bodies from the index.
 
 #### Return values

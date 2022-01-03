@@ -289,10 +289,6 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
                 }
 
                 auto loop = std::make_unique<S2Loop>(vertices, S2Debug::DISABLE);
-                if (!loop->IsValid())
-                {
-                    return -i - 1;
-                }
                 loops.push_back(std::move(loop));
                 loop_count++;
 
@@ -338,10 +334,5 @@ int ParseS2Polygon(const char *body, std::unique_ptr<S2Polygon> *polygon)
     }
 
     *polygon = std::make_unique<S2Polygon>(std::move(loops), S2Debug::DISABLE);
-    if (!(*polygon)->IsValid())
-    {
-        *polygon = nullptr;
-        return -i - 1;
-    }
     return 0;
 }

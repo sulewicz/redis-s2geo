@@ -34,8 +34,9 @@ void TestParsePolygon(void **state)
     assert_int_equal(PARSE_ERR_LOOP_LIMIT, ParseS2Polygon("[[[31.9921875,46.31658418182218],[78.75,25.48295117535531],[82.6171875,64.16810689799152],[31.9921875,46.31658418182218]], [[31.9921875,46.31658418182218],[78.75,25.48295117535531],[82.6171875,64.16810689799152],[31.9921875,46.31658418182218]]]", &polygon));
     assert_null(polygon.get());
 
-    assert_int_equal(-157, ParseS2Polygon("[[[31.9921875,46.31658418182218],[31.9921875,46.31658418182218],[31.9921875,46.31658418182218],[31.9921875,46.31658418182218],[31.9921875,46.31658418182218]]]", &polygon));
-    assert_null(polygon.get());
+    assert_int_equal(0, ParseS2Polygon("[[[31.9921875,46.31658418182218],[31.9921875,46.31658418182218],[31.9921875,46.31658418182218],[31.9921875,46.31658418182218],[31.9921875,46.31658418182218]]]", &polygon));
+    assert_int_equal(1, polygon->num_loops());
+    assert_int_equal(4, polygon->loop(0)->num_vertices());
 
     assert_int_equal(-1, ParseS2Polygon("", &polygon));
     assert_null(polygon.get());
@@ -45,6 +46,10 @@ void TestParsePolygon(void **state)
 
     assert_int_equal(-1, ParseS2Polygon("", nullptr));
     assert_null(polygon.get());
+
+    assert_int_equal(0, ParseS2Polygon("[[[-149.836477,61.173031],[-149.836134,61.173031],[-149.836134,61.173031],[-149.835799,61.173031],[-149.835799,61.173148],[-149.836478,61.173147],[-149.836477,61.173031]]]", &polygon));
+    assert_int_equal(1, polygon->num_loops());
+    assert_int_equal(6, polygon->loop(0)->num_vertices());
 }
 
 void TestParsePoint(void **state)

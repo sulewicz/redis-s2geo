@@ -324,6 +324,11 @@ int TestPolygonSearch(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
     ASSERT_INT_EQUAL("wrong polygon search response", 2, (int)RedisModule_CallReplyLength(reply));
     ASSERT_SET_EQUAL("wrong polygon search response", std::unordered_set<std::string>({kPolygonName[POLYGON_YELLOW], kPolygonName[POLYGON_RED]}), RedisArrayToSet(reply));
 
+    reply = RedisModule_Call(ctx, "S2GEO.POLYSEARCH", "cc", kTestIndexName, "[[[-108.272066,36.255106],[-94.099703,36.255106],[-94.099703,41.666532],[-108.272066,41.666532],[-108.272066,36.255106]]]");
+    ASSERT_REDIS_TYPE_EQUAL("could not perform polygon search", REDISMODULE_REPLY_ARRAY, reply);
+    ASSERT_INT_EQUAL("wrong polygon search response", 4, (int)RedisModule_CallReplyLength(reply));
+    ASSERT_SET_EQUAL("wrong polygon search response", std::unordered_set<std::string>({kPolygonName[POLYGON_YELLOW], kPolygonName[POLYGON_RED], kPolygonName[POLYGON_BLUE], kPolygonName[POLYGON_GREEN]}), RedisArrayToSet(reply));
+
     // Delete the polygons
     for (size_t idx = 0; idx < POLYGON_COUNT; idx++)
     {

@@ -3,7 +3,6 @@
 Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer algorithm for indexing ([demo](http://s2.sidewalklabs.com/regioncoverer/)). Allows point with polygon and polygon with polygon overlap tests in constant time.
 
 <!-- toc -->
-* [Implementation details](#implementation-details)
 * [How to build](#how-to-build)
   * [Build absl library (S2 dependency)](#build-absl-library-s2-dependency)
   * [Build redis-s2geo](#build-redis-s2geo)
@@ -23,9 +22,6 @@ Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer alg
     * [S2GEO.POPULATE (DEBUG)](#s2geopopulate-debug)
 
 <!-- toc stop -->
-# Implementation details
-
-TODO
 
 # How to build
 

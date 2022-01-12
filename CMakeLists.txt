@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(redis-s2geo VERSION 0.0.1)
+project(redis-s2geo VERSION 0.0.2)
 
 # If OpenSSL is installed in a non-standard location, configure with
 # something like:

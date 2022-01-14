@@ -47,6 +47,8 @@ Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer alg
 
 Add `loadmodule <BUILD_PATH>/libredis-s2geo.so` to your Redis config, or run `MODULE LOAD <BUILD_PATH>/libredis-s2geo.so` command on your Redis instance.
 
+See a simple web app example here: [redis-s2geo-sample](https://github.com/sulewicz/redis-s2geo-sample).
+
 ## Commands
 
 ### S2GEO.ISET index

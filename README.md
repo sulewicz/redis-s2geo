@@ -30,7 +30,7 @@ Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer alg
 
 `cd abseil-cpp`
 
-`git checkout lts_2021_11_02`
+`git checkout lts_2022_06_23`
 
 `mkdir build && cd build`
 

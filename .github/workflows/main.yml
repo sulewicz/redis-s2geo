@@ -78,7 +78,7 @@ jobs:
         with:
           repository: abseil/abseil-cpp
           path: output/absl
-          ref: lts_2021_11_02
+          ref: lts_2022_06_23
 
       - name: absl - Configure CMake
         if: steps.cache-absl-bin.outputs.cache-hit != 'true'
@@ -134,7 +134,7 @@ jobs:
         with:
           repository: google/s2geometry
           path: output/s2
-          ref: v0.10.0-2022.02.23.00
+          ref: v0.10.0
 
       - name: S2 - Configure CMake
         if: steps.cache-s2-bin.outputs.cache-hit != 'true'

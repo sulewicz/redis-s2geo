@@ -15,45 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Dependency: cmocka
-
-      - name: cmocka - Configure cache - src
-        if: ${{ !env.ACT }}
-        id: cache-cmocka-src
-        uses: actions/cache@v2
-        with:
-          path: output/cmocka
-          key: ${{ runner.os }}-cmocka-src
-
-      - name: cmocka - Configure cache - bin
-        if: ${{ !env.ACT }}
-        id: cache-cmocka-bin
-        uses: actions/cache@v2
-        with:
-          path: output/cmocka-bin
-          key: ${{ runner.os }}-cmocka-bin
-
-      - name: cmocka - Clone
-        if: steps.cache-cmocka-src.outputs.cache-hit != 'true'
-        uses: sudosubin/git-clone-action@v1.0.1
-        with:
-          repository: projects/cmocka
-          platform: git.cryptomilk.org
-          ref: cmocka-1.1.5
-          path: output/cmocka
-
-      - name: cmocka - Configure CMake
-        if: steps.cache-cmocka-bin.outputs.cache-hit != 'true'
-        run: cmake -B ${{github.workspace}}/output/cmocka/build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/output/cmocka-bin -DWITH_STATIC_LIB=ON output/cmocka
-
-      - name: cmocka - Build
-        if: steps.cache-cmocka-bin.outputs.cache-hit != 'true'
-        run: cmake --build ${{github.workspace}}/output/cmocka/build
-
-      - name: cmocka - Install
-        if: steps.cache-cmocka-bin.outputs.cache-hit != 'true'
-        run: cmake --install ${{github.workspace}}/output/cmocka/build
-
       # Dependency: ABSL
 
       - name: absl - Configure cache - src
@@ -91,65 +52,10 @@ jobs:
         if: steps.cache-absl-bin.outputs.cache-hit != 'true'
         run: cmake --install ${{github.workspace}}/output/absl/build
 
-      # Dependency: Google Test
-
-      - name: gtest - Configure cache - src
-        if: ${{ !env.ACT }}
-        id: cache-gtest-src
-        uses: actions/cache@v2
-        with:
-          path: output/gtest
-          key: ${{ runner.os }}-gtest-src
-
-      - name: gtest - Clone
-        if: steps.cache-gtest-src.outputs.cache-hit != 'true'
-        uses: sudosubin/git-clone-action@v1.0.1
-        with:
-          repository: google/googletest
-          path: output/gtest
-          ref: release-1.8.0
-
-      # Dependency: S2
-
-      - name: S2 - Configure cache - src
-        if: ${{ !env.ACT }}
-        id: cache-s2-src
-        uses: actions/cache@v2
-        with:
-          path: output/s2
-          key: ${{ runner.os }}-s2-src
-
-      - name: S2 - Configure cache - bin
-        if: ${{ !env.ACT }}
-        id: cache-s2-bin
-        uses: actions/cache@v2
-        with:
-          path: output/s2-bin
-          key: ${{ runner.os }}-s2-bin
-
-      - name: S2 - Clone
-        if: steps.cache-s2-src.outputs.cache-hit != 'true'
-        uses: sudosubin/git-clone-action@v1.0.1
-        with:
-          repository: google/s2geometry
-          path: output/s2
-
-      - name: S2 - Configure CMake
-        if: steps.cache-s2-bin.outputs.cache-hit != 'true'
-        run: cmake -B ${{github.workspace}}/output/s2/build -DCMAKE_PREFIX_PATH="${{github.workspace}}/output/absl-bin" -DBUILD_EXAMPLES=OFF -DGTEST_ROOT="${{github.workspace}}/output/gtest/googletest" -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/output/s2-bin output/s2
-
-      - name: S2 - Build
-        if: steps.cache-s2-bin.outputs.cache-hit != 'true'
-        run: cmake --build ${{github.workspace}}/output/s2/build
-
-      - name: S2 - Install
-        if: steps.cache-s2-bin.outputs.cache-hit != 'true'
-        run: cmake --install ${{github.workspace}}/output/s2/build
-
       # Main build
 
       - name: redis-s2geo - Configure CMake
-        run: cmake -B ${{github.workspace}}/output/redis-s2geo/build -DABSL_PATH="${{github.workspace}}/output/absl-bin" -DCMOCKA_PATH="${{github.workspace}}/output/cmocka-bin" -DS2_PATH="${{github.workspace}}/output/s2-bin" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} .
+        run: cmake -B ${{github.workspace}}/output/redis-s2geo/build -DCMAKE_CXX_STANDARD=17 -DABSL_PATH="${{github.workspace}}/output/absl-bin" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} .
 
       - name: redis-s2geo - Build
         run: cmake --build ${{github.workspace}}/output/redis-s2geo/build

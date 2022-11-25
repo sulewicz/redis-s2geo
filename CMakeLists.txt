@@ -72,8 +72,7 @@ target_link_libraries(
     redis-s2geo
     ${OPENSSL_LIBRARIES}
     c
-    s2
-    s2testing)
+    s2)
 
 # Add version information to the target
 set_target_properties(redis-s2geo PROPERTIES

@@ -134,6 +134,7 @@ jobs:
         with:
           repository: google/s2geometry
           path: output/s2
+          ref: v0.10.0-2022.02.23.00
 
       - name: S2 - Configure CMake
         if: steps.cache-s2-bin.outputs.cache-hit != 'true'

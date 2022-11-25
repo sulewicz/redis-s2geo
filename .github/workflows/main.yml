@@ -78,6 +78,7 @@ jobs:
         with:
           repository: abseil/abseil-cpp
           path: output/absl
+          ref: lts_2021_11_02
 
       - name: absl - Configure CMake
         if: steps.cache-absl-bin.outputs.cache-hit != 'true'

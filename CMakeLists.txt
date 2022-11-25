@@ -6,7 +6,7 @@ project(redis-s2geo VERSION 0.0.2)
 # something like:
 # OPENSSL_ROOT_DIR=/usr/local/opt/openssl cmake ..
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # No compiler-specific extensions, i.e. -std=c++17, not -std=gnu++17.
 set(CMAKE_CXX_EXTENSIONS OFF)

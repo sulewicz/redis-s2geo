@@ -42,7 +42,7 @@ jobs:
 
       - name: absl - Configure CMake
         if: steps.cache-absl-bin.outputs.cache-hit != 'true'
-        run: cmake -B ${{github.workspace}}/output/absl/build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/output/absl-bin -DCMAKE_CXX_STANDARD=11 -DCMAKE_POSITION_INDEPENDENT_CODE=ON output/absl
+        run: cmake -B ${{github.workspace}}/output/absl/build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/output/absl-bin -DCMAKE_CXX_STANDARD=17 -DCMAKE_POSITION_INDEPENDENT_CODE=ON output/absl
 
       - name: absl - Build
         if: steps.cache-absl-bin.outputs.cache-hit != 'true'

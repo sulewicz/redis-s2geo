@@ -30,8 +30,6 @@ Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer alg
 
 `cd abseil-cpp`
 
-`git checkout lts_2022_06_23`
-
 `mkdir build && cd build`
 
 `cmake -DCMAKE_INSTALL_PREFIX=<ABSL_PATH> -DCMAKE_CXX_STANDARD=17 -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..`

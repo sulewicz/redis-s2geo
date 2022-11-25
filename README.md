@@ -39,7 +39,7 @@ Simple Redis Module for geospatial queries, which utilizes S2 Region Coverer alg
 ## Build redis-s2geo
 `mkdir build && cd build`
 
-`cmake -DABSL_PATH="<ABSL_PATH>" # On Mac you may have to provide -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)`
+`cmake -DABSL_PATH="<ABSL_PATH>" .. # On Mac you may have to provide -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)`
 
 `make`
 

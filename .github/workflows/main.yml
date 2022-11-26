@@ -13,14 +13,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       # Dependency: ABSL
 
       - name: absl - Configure cache - src
         if: ${{ !env.ACT }}
         id: cache-absl-src
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: output/absl
           key: ${{ runner.os }}-absl-src
@@ -28,7 +28,7 @@ jobs:
       - name: absl - Configure cache - bin
         if: ${{ !env.ACT }}
         id: cache-absl-bin
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: output/absl-bin
           key: ${{ runner.os }}-absl-bin
@@ -67,7 +67,7 @@ jobs:
         run: ${{github.workspace}}/archive.sh ${{github.workspace}}/output/redis-s2geo/ redis-s2geo-${{ runner.os }}
 
       - name: redis-s2geo - Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: redis-s2geo-${{ runner.os }}
           path: |
